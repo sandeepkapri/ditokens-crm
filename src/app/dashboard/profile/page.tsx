@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { getAvatarUrl, validateImageFile } from "@/lib/utils/avatar";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -15,9 +16,12 @@ export default function ProfilePage() {
     contact: "",
     country: "",
     state: "",
+    profilePicture: "",
   });
   const [updateHistory, setUpdateHistory] = useState([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [profilePicturePreview, setProfilePicturePreview] = useState("");
+  const [uploadingPicture, setUploadingPicture] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -25,18 +29,54 @@ export default function ProfilePage() {
     }
     
     if (session?.user) {
-      setFormData({
-        name: session.user.name || "",
-        email: session.user.email || "",
-        contact: "",
-        country: "",
-        state: "",
-      });
+      // Load current profile data
+      loadProfileData();
       
       // Fetch profile update history
       fetchUpdateHistory();
     }
   }, [status, router, session]);
+
+  const loadProfileData = async () => {
+    try {
+      const response = await fetch("/api/user/profile");
+      if (response.ok) {
+        const data = await response.json();
+        const user = data.user;
+        setFormData({
+          name: user.name || "",
+          email: user.email || "",
+          contact: user.contactNumber || "",
+          country: user.country || "",
+          state: user.state || "",
+          profilePicture: user.profilePicture || "",
+        });
+        setProfilePicturePreview(getAvatarUrl(user.profilePicture));
+      }
+    } catch (error) {
+      console.error("Failed to load profile data:", error);
+    }
+  };
+
+  const handleProfilePictureChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Validate the file
+      const validation = validateImageFile(file);
+      if (!validation.isValid) {
+        alert(validation.error);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        setFormData(prev => ({ ...prev, profilePicture: base64String }));
+        setProfilePicturePreview(base64String);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const fetchUpdateHistory = async () => {
     setLoadingHistory(true);
@@ -77,12 +117,25 @@ export default function ProfilePage() {
     e.preventDefault();
     
     try {
+      const updateData: any = {
+        name: formData.name,
+        contactNumber: formData.contact,
+        country: formData.country,
+        state: formData.state,
+      };
+
+      // Only include profile picture if it's a new base64 image
+      if (formData.profilePicture && formData.profilePicture.startsWith('data:image/')) {
+        updateData.profilePicture = formData.profilePicture;
+        setUploadingPicture(true);
+      }
+
       const response = await fetch("/api/user/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(updateData),
       });
 
       const data = await response.json();
@@ -96,17 +149,25 @@ export default function ProfilePage() {
             contact: data.user.contactNumber || "",
             country: data.user.country || "",
             state: data.user.state || "",
+            profilePicture: data.user.profilePicture || "",
           });
+          setProfilePicturePreview(getAvatarUrl(data.user.profilePicture));
         }
         setIsEditing(false);
-        // You could add a success toast here
+        setUploadingPicture(false);
+        alert("Profile updated successfully!");
+        
+        // Refresh profile update history
+        fetchUpdateHistory();
       } else {
         console.error("Profile update failed:", data.error);
-        // You could add an error toast here
+        alert(data.error || "Failed to update profile");
+        setUploadingPicture(false);
       }
     } catch (error) {
       console.error("Profile update error:", error);
-      // You could add an error toast here
+      alert("An error occurred while updating your profile");
+      setUploadingPicture(false);
     }
   };
 
@@ -176,6 +237,57 @@ export default function ProfilePage() {
               </h3>
               
               <form onSubmit={handleSubmit}>
+                {/* Profile Picture Section */}
+                <div className="mb-8 text-center">
+                  <div className="relative inline-block">
+                    <div className="w-32 h-32 rounded-full mx-auto mb-4 overflow-hidden border-4 border-gray-200 dark:border-gray-600">
+                      <Image
+                        src={profilePicturePreview}
+                        alt="Profile Picture"
+                        width={128}
+                        height={128}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    {isEditing && (
+                      <div>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleProfilePictureChange}
+                          className="hidden"
+                          id="profile-picture-input"
+                        />
+                        <label
+                          htmlFor="profile-picture-input"
+                          className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-primary-dark transition-colors"
+                        >
+                          {uploadingPicture ? (
+                            <>
+                              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                              </svg>
+                              Uploading...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              Change Photo
+                            </>
+                          )}
+                        </label>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                          JPG, PNG, GIF, or WebP (max 2MB)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

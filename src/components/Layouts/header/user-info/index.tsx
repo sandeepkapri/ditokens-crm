@@ -10,18 +10,50 @@ import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LogOutIcon, SettingsIcon, UserIcon } from "./icons";
+import { getAvatarUrl } from "@/lib/utils/avatar";
 
 export function UserInfo() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
+  const [profilePicture, setProfilePicture] = useState<string>("");
+  const [mounted, setMounted] = useState(false);
+
+  // Ensure client-side rendering
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Load user profile picture
+  useEffect(() => {
+    if (!mounted) return;
+    
+    const loadUserProfile = async () => {
+      if (session?.user?.email) {
+        try {
+          const response = await fetch("/api/user/profile");
+          if (response.ok) {
+            const data = await response.json();
+            setProfilePicture(getAvatarUrl(data.user.profilePicture));
+          }
+        } catch (error) {
+          console.error("Failed to load user profile:", error);
+          setProfilePicture(getAvatarUrl(null));
+        }
+      } else {
+        setProfilePicture(getAvatarUrl(null));
+      }
+    };
+
+    loadUserProfile();
+  }, [session?.user?.email, mounted]);
 
   // Fallback user data if session is not available
   const USER = {
     name: session?.user?.name || "Guest User",
     email: session?.user?.email || "guest@ditokens.com",
-    img: session?.user?.image || "/images/user/user-03.png",
+    img: mounted ? (profilePicture || getAvatarUrl(null)) : getAvatarUrl(null),
   };
 
   const handleLogout = async () => {
@@ -38,14 +70,16 @@ export function UserInfo() {
         <span className="sr-only">My Account</span>
 
         <figure className="flex items-center gap-3">
-          <Image
-            src={USER.img}
-            className="size-12"
-            alt={`Avatar of ${USER.name}`}
-            role="presentation"
-            width={200}
-            height={200}
-          />
+          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-600">
+            <Image
+              src={USER.img}
+              className="w-full h-full object-cover"
+              alt={`Avatar of ${USER.name}`}
+              role="presentation"
+              width={48}
+              height={48}
+            />
+          </div>
           <figcaption className="flex items-center gap-1 font-medium text-dark dark:text-dark-6 max-[1024px]:sr-only">
             <span>{USER.name}</span>
 

@@ -155,3 +155,24 @@ export const NAV_DATA = [
     ],
   },
 ];
+
+// Function to get navigation data with admin access for admin users
+export const getNavData = (isAdmin: boolean) => {
+  if (!isAdmin) return NAV_DATA;
+  
+  // Add admin access section for admin users
+  return [
+    ...NAV_DATA,
+    {
+      label: "ADMIN ACCESS",
+      items: [
+        {
+          title: "Admin Dashboard",
+          url: "/admin/dashboard",
+          icon: Icons.User,
+          items: [],
+        },
+      ],
+    },
+  ];
+};

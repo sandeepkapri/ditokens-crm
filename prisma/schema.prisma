@@ -29,6 +29,7 @@ model User {
   availableTokens   Float     @default(0)
   totalEarnings     Float     @default(0)
   referralEarnings  Float     @default(0)
+  profilePicture    String?   // URL or path to profile picture
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -43,6 +44,7 @@ model User {
   userSettings     UserSettings?
   referrerCommissions ReferralCommission[] @relation("ReferrerCommissions")
   referredUserCommissions ReferralCommission[] @relation("ReferredUserCommissions")
+  notifications    Notification[]
 
   @@map("users")
 }
@@ -240,4 +242,35 @@ enum ProfileUpdateType {
   PASSWORD_RESET
   EMAIL_UPDATE
   SETTINGS_UPDATE
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String
+  icon      String?  // URL or icon name
+  data      Json?    // Additional data for the notification
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+enum NotificationType {
+  SYSTEM
+  TRANSACTION
+  REFERRAL
+  STAKING
+  WITHDRAWAL
+  DEPOSIT
+  SECURITY
+  PROFILE_UPDATE
+  TOKEN_PURCHASE
+  ADMIN_MESSAGE
 }

@@ -3,12 +3,16 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { writeFile } from "fs/promises";
+import { join } from "path";
+import { NotificationHelpers } from "@/lib/notifications";
 
 const profileUpdateSchema = z.object({
   name: z.string().min(1, "Name is required").optional(),
   contactNumber: z.string().min(1, "Contact number is required").optional(),
   country: z.string().min(1, "Country is required").optional(),
   state: z.string().min(1, "State is required").optional(),
+  profilePicture: z.string().optional(), // Base64 image data
 });
 
 export async function PUT(request: NextRequest) {
@@ -93,6 +97,42 @@ export async function PUT(request: NextRequest) {
       });
     }
 
+    // Handle profile picture upload
+    if (updateData.profilePicture) {
+      try {
+        // Validate base64 image data
+        const base64Data = updateData.profilePicture.replace(/^data:image\/[a-z]+;base64,/, "");
+        const buffer = Buffer.from(base64Data, 'base64');
+        
+        // Generate unique filename
+        const timestamp = Date.now();
+        const filename = `${currentUser.id}_${timestamp}.jpg`;
+        const filepath = join(process.cwd(), 'public', 'images', 'avatars', filename);
+        
+        // Save file
+        await writeFile(filepath, buffer);
+        
+        const profilePictureUrl = `/images/avatars/${filename}`;
+        updates.profilePicture = profilePictureUrl;
+        
+        profileUpdates.push({
+          userId: currentUser.id,
+          field: "profilePicture",
+          oldValue: currentUser.profilePicture || "default",
+          newValue: profilePictureUrl,
+          updateType: "PROFILE_UPDATE",
+          ipAddress: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || "unknown",
+          userAgent: request.headers.get("user-agent") || "unknown",
+        });
+      } catch (error) {
+        console.error("Profile picture upload error:", error);
+        return NextResponse.json(
+          { error: "Failed to upload profile picture" },
+          { status: 400 }
+        );
+      }
+    }
+
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(
         { message: "No changes detected" },
@@ -111,6 +151,10 @@ export async function PUT(request: NextRequest) {
       await prisma.profileUpdate.createMany({
         data: profileUpdates,
       });
+
+      // Create notification for profile update
+      const updatedFields = profileUpdates.map(update => update.field).join(", ");
+      await NotificationHelpers.onProfileUpdate(currentUser.id, updatedFields);
     }
 
     return NextResponse.json(
@@ -123,6 +167,7 @@ export async function PUT(request: NextRequest) {
           contactNumber: updatedUser.contactNumber,
           country: updatedUser.country,
           state: updatedUser.state,
+          profilePicture: updatedUser.profilePicture,
         }
       },
       { status: 200 }
@@ -163,6 +208,7 @@ export async function GET(request: NextRequest) {
         contactNumber: true,
         country: true,
         state: true,
+        profilePicture: true,
         createdAt: true,
         updatedAt: true,
       },

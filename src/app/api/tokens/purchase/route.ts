@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { NotificationHelpers } from "@/lib/notifications";
 
 const purchaseSchema = z.object({
   amount: z.number().positive(),
@@ -122,6 +123,25 @@ export async function POST(request: NextRequest) {
       where: { id: transaction.id },
       data: { status: "COMPLETED" },
     });
+
+    // Create notification for successful purchase
+    await NotificationHelpers.onTokenPurchase(user.id, tokenAmount, amount);
+
+    // Create notification for referrer if applicable
+    if (user.referredBy) {
+      const referrer = await prisma.user.findUnique({
+        where: { referralCode: user.referredBy },
+      });
+
+      if (referrer) {
+        const commissionAmount = amount * 0.05; // 5% commission
+        await NotificationHelpers.onReferralCommission(
+          referrer.id, 
+          commissionAmount, 
+          user.name || "User"
+        );
+      }
+    }
 
     return NextResponse.json({
       message: "Purchase successful",
