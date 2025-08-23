@@ -1,14 +1,15 @@
-import darkLogo from "@/assets/logos/dark.svg";
-import logo from "@/assets/logos/main.svg";
+import darkLogo from "@/assets/logos/ditokens-logo-dark.png";
+import logo from "@/assets/logos/ditokens-logo-light.png";
 import Image from "next/image";
 
 export function Logo() {
   return (
-    <div className="relative h-8 max-w-[10.847rem]">
+    <div className="relative h-8 w-auto">
       <Image
         src={logo}
-        fill
-        className="dark:hidden"
+        height={32}
+        width={0}
+        className="dark:hidden h-8 w-auto"
         alt="NextAdmin logo"
         role="presentation"
         quality={100}
@@ -16,8 +17,9 @@ export function Logo() {
 
       <Image
         src={darkLogo}
-        fill
-        className="hidden dark:block"
+        height={32}
+        width={0}
+        className="hidden dark:block h-8 w-auto"
         alt="NextAdmin logo"
         role="presentation"
         quality={100}
@@ -25,3 +27,4 @@ export function Logo() {
     </div>
   );
 }
+

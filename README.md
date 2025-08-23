@@ -1,85 +1,201 @@
-# NextAdmin - Next.js Admin Dashboard Template and Components
+# Ditokens CRM
 
-**NextAdmin** is a Free, open-source Next.js admin dashboard toolkit featuring 200+ UI components and templates that come with pre-built elements, components, pages, high-quality design, integrations, and much more to help you create powerful admin dashboards with ease.
+A comprehensive CRM application built with Next.js 15+ for managing token sales, user relationships, and referral systems.
 
+## Features
 
-[![nextjs admin template](https://cdn.pimjo.com/nextadmin-2.png)](https://nextadmin.co/)
+### 🔐 Authentication System
+- User registration with comprehensive profile fields
+- Secure login/logout with session handling
+- Role-based access control (User, Admin, Superadmin)
 
+### 🪙 Token Management
+- 50M token sale with dynamic pricing
+- Starting price: $2.80 USD
+- Daily price updates with interactive charts
+- 3-year minimum staking period
+- Wallet integration for deposits and withdrawals
 
-**NextAdmin** provides you with a diverse set of dashboard UI components, elements, examples and pages necessary for creating top-notch admin panels or dashboards with **powerful** features and integrations. Whether you are working on a complex web application or a basic website, **NextAdmin** has got you covered.
+### 👥 Referral System
+- Unique referral codes for each user
+- 5% referral commission (one-time)
+- Monthly payout in USD equivalent
+- Referral tracking and analytics
 
-### [✨ Visit Website](https://nextadmin.co/)
-### [🚀 Live Demo](https://demo.nextadmin.co/)
-### [📖 Docs](https://docs.nextadmin.co/)
+### 💬 Communication Tools
+- Internal messaging system
+- Email functionality
+- Live chat integration
+- Client communication management
 
-By leveraging the latest features of **Next.js 14** and key functionalities like **server-side rendering (SSR)**, **static site generation (SSG)**, and seamless **API route integration**, **NextAdmin** ensures optimal performance. With the added benefits of **React 18 advancements** and **TypeScript** reliability, **NextAdmin** is the ultimate choice to kickstart your **Next.js** project efficiently.
+### 🛠️ Admin Panel
+- Superadmin dashboard
+- User management
+- Transaction monitoring
+- Token price management
+- Referral system oversight
+- Content management
+
+## Tech Stack
+
+- **Frontend**: Next.js 15+ with App Router
+- **Backend**: Next.js API Routes
+- **Database**: MySQL with Prisma ORM
+- **Authentication**: NextAuth.js
+- **Styling**: TailwindCSS
+- **Charts**: Recharts
+- **Language**: TypeScript
+
+## Prerequisites
+
+- Node.js 18+ 
+- MySQL database
+- npm or pnpm package manager
 
 ## Installation
 
-1. Download/fork/clone the repo and Once you're in the correct directory, it's time to install all the necessary dependencies. You can do this by typing the following command:
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd ditokens-crm
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Set up environment variables**
+   ```bash
+   cp .env.example .env
+   ```
+   
+   Update `.env` with your database credentials:
+   ```env
+   DATABASE_URL="mysql://username:password@localhost:3306/ditokens_crm"
+   NEXTAUTH_SECRET="your-secret-key-here"
+   NEXTAUTH_URL="http://localhost:3000"
+   JWT_SECRET="your-jwt-secret-here"
+   ```
+
+4. **Set up the database**
+   ```bash
+   # Generate Prisma client
+   npx prisma generate
+   
+   # Run database migrations
+   npx prisma migrate dev --name init
+   
+   # Seed the database (optional)
+   npx prisma db seed
+   ```
+
+5. **Start the development server**
+   ```bash
+   npm run dev
+   ```
+
+6. **Open your browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
+
+## Database Schema
+
+The application uses the following main models:
+
+- **User**: User profiles, authentication, and token balances
+- **TokenPrice**: Daily token price tracking
+- **StakingRecord**: Token staking information
+- **Transaction**: All financial transactions
+- **ReferralCommission**: Referral earnings tracking
+- **Message**: Internal communication system
+- **LiveChat**: Live chat messages
+- **SystemSettings**: Application configuration
+
+## API Endpoints
+
+### Authentication
+- `POST /api/auth/sign-up` - User registration
+- `POST /api/auth/sign-in` - User login
+- `GET/POST /api/auth/[...nextauth]` - NextAuth endpoints
+
+### User Management
+- `GET /api/users/profile` - Get user profile
+- `PUT /api/users/profile` - Update user profile
+- `GET /api/users/referrals` - Get user referrals
+
+### Token Operations
+- `GET /api/tokens/price` - Get current token price
+- `POST /api/tokens/stake` - Stake tokens
+- `POST /api/tokens/unstake` - Unstake tokens
+- `GET /api/tokens/balance` - Get token balance
+
+### Admin
+- `GET /api/admin/users` - List all users
+- `PUT /api/admin/users/:id` - Update user
+- `POST /api/admin/tokens/price` - Update token price
+
+## Project Structure
 
 ```
-npm install
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API routes
+│   ├── auth/              # Authentication pages
+│   ├── dashboard/         # Main dashboard
+│   └── layout.tsx         # Root layout
+├── components/            # Reusable components
+├── lib/                   # Utility libraries
+│   ├── auth.ts           # NextAuth configuration
+│   └── prisma.ts         # Prisma client
+├── types/                 # TypeScript type definitions
+└── utils/                 # Helper functions
 ```
-If you're using **Yarn** as your package manager, the command will be:
 
-```
-yarn install
-```
+## Development
 
-2. Okay, you're almost there. Now all you need to do is start the development server. If you're using **npm**, the command is:
-
-```
+### Running in Development Mode
+```bash
 npm run dev
 ```
-And if you're using **Yarn**, it's:
 
+### Building for Production
+```bash
+npm run build
+npm start
 ```
-yarn dev
+
+### Database Management
+```bash
+# View database in Prisma Studio
+npx prisma studio
+
+# Reset database
+npx prisma migrate reset
+
+# Generate new migration
+npx prisma migrate dev --name <migration-name>
 ```
 
-And voila! You're now ready to start developing. **Happy coding**!
+## Security Features
 
-## Highlighted Features
-**200+ Next.js Dashboard Ul Components and Templates** - includes a variety of prebuilt **Ul elements, components, pages, and examples** crafted with a high-quality design.
-Additionally, features seamless **essential integrations and extensive functionalities**.
+- Password hashing with bcrypt
+- JWT-based authentication
+- Role-based access control
+- Input validation with Zod
+- SQL injection prevention with Prisma
 
-- A library of over **200** professional dashboard UI components and elements.
-- Five distinctive dashboard variations, catering to diverse use-cases.
-- A comprehensive set of essential dashboard and admin pages.
-- More than **45** **Next.js** files, ready for use.
-- Styling facilitated by **Tailwind CSS** files.
-- A design that resonates premium quality and high aesthetics.
-- A handy UI kit with assets.
-- Over ten web apps complete with examples.
-- Support for both **dark mode** and **light mode**.
-- Essential integrations including - Authentication (**NextAuth**), Database (**Postgres** with **Prisma**), and Search (**Algolia**).
-- Detailed and user-friendly documentation.
-- Customizable plugins and add-ons.
-- **TypeScript** compatibility.
-- Plus, much more!
+## Contributing
 
-All these features and more make **NextAdmin** a robust, well-rounded solution for all your dashboard development needs.
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-## Update Logs
+## License
 
-### Version 1.2.1 - [Mar 20, 2025]
-- Fix Peer dependency issues and NextConfig warning.
-- Updated apexcharts and react-apexhcarts to the latest version.
+This project is licensed under the MIT License.
 
-### Version 1.2.0 - Major Upgrade and UI Improvements - [Jan 27, 2025]
+## Support
 
-- Upgraded to Next.js v15 and updated dependencies
-- API integration with loading skeleton for tables and charts.
-- Improved code structure for better readability.
-- Rebuilt components like dropdown, sidebar, and all ui-elements using accessibility practices.
-- Using search-params to store dropdown selection and refetch data.
-- Semantic markups, better separation of concerns and more.
-
-### Version 1.1.0
-- Updated Dependencies
-- Removed Unused Integrations
-- Optimized App
-
-### Version 1.0
-- Initial Release - [May 13, 2024]
+For support and questions, please contact the development team or create an issue in the repository.

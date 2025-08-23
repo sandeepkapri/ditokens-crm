@@ -1,0 +1,335 @@
+"use client";
+
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+
+interface WalletSummary {
+  totalDeposits: number;
+  totalWithdrawals: number;
+  pendingWithdrawals: number;
+  activeDepositWallets: number;
+  activeWithdrawalWallets: number;
+  lastDeposit: string | null;
+  lastWithdrawal: string | null;
+}
+
+export default function WalletsOverviewPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [walletSummary, setWalletSummary] = useState<WalletSummary>({
+    totalDeposits: 0,
+    totalWithdrawals: 0,
+    pendingWithdrawals: 0,
+    activeDepositWallets: 0,
+    activeWithdrawalWallets: 0,
+    lastDeposit: null,
+    lastWithdrawal: null,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/sign-in");
+    }
+    
+    if (session?.user) {
+      loadWalletSummary();
+    }
+  }, [status, router, session]);
+
+  const loadWalletSummary = async () => {
+    try {
+      // Load deposit data
+      const depositResponse = await fetch("/api/wallets/deposit");
+      const depositData = depositResponse.ok ? await depositResponse.json() : { wallets: [], transactions: [] };
+      
+      // Load withdrawal data
+      const withdrawalResponse = await fetch("/api/wallets/withdrawal");
+      const withdrawalData = withdrawalResponse.ok ? await withdrawalResponse.json() : { wallets: [], requests: [] };
+
+      // Calculate summary
+      const summary: WalletSummary = {
+        totalDeposits: depositData.transactions?.reduce((sum: number, tx: any) => sum + tx.amount, 0) || 0,
+        totalWithdrawals: withdrawalData.requests?.reduce((sum: number, req: any) => 
+          req.status === "COMPLETED" ? sum + req.amount : sum, 0) || 0,
+        pendingWithdrawals: withdrawalData.requests?.filter((req: any) => 
+          req.status === "PENDING" || req.status === "PROCESSING").length || 0,
+        activeDepositWallets: depositData.wallets?.filter((w: any) => w.isActive).length || 0,
+        activeWithdrawalWallets: withdrawalData.wallets?.filter((w: any) => w.isActive && w.isVerified).length || 0,
+        lastDeposit: depositData.transactions?.[0]?.timestamp || null,
+        lastWithdrawal: withdrawalData.requests?.[0]?.timestamp || null,
+      };
+
+      setWalletSummary(summary);
+    } catch (error) {
+      console.error("Failed to load wallet summary:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (status === "loading" || isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return null;
+  }
+
+  return (
+    <div className="p-4 md:p-6 2xl:p-10">
+      <div className="mx-auto max-w-screen-2xl">
+        {/* Page Header */}
+        <div className="mb-6">
+          <h2 className="text-title-md2 font-bold text-black dark:text-white">
+            Wallet Overview
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
+            Manage your cryptocurrency wallets for deposits and withdrawals
+          </p>
+        </div>
+
+        {/* Wallet Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-stroke-dark dark:bg-box-dark">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Total Deposits
+                </p>
+                <p className="text-2xl font-bold text-black dark:text-white">
+                  {walletSummary.totalDeposits.toFixed(6)}
+                </p>
+              </div>
+              <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
+                <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-stroke-dark dark:bg-box-dark">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Total Withdrawals
+                </p>
+                <p className="text-2xl font-bold text-black dark:text-white">
+                  {walletSummary.totalWithdrawals.toFixed(6)}
+                </p>
+              </div>
+              <div className="p-3 bg-red-100 dark:bg-red-900 rounded-full">
+                <svg className="w-6 h-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 13l-5 5m0 0l-5-5m5 5V6" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-stroke-dark dark:bg-box-dark">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Active Wallets
+                </p>
+                <p className="text-2xl font-bold text-black dark:text-white">
+                  {walletSummary.activeDepositWallets + walletSummary.activeWithdrawalWallets}
+                </p>
+              </div>
+              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
+                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-stroke-dark dark:bg-box-dark">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Pending Withdrawals
+                </p>
+                <p className="text-2xl font-bold text-black dark:text-white">
+                  {walletSummary.pendingWithdrawals}
+                </p>
+              </div>
+              <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
+                <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-stroke-dark dark:bg-box-dark">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-black dark:text-white">
+                Deposit Wallets
+              </h3>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {walletSummary.activeDepositWallets} active
+              </span>
+            </div>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Manage your deposit addresses for receiving cryptocurrencies
+            </p>
+
+            <div className="space-y-3">
+              <div className="flex items-center text-sm">
+                <span className="text-gray-500 dark:text-gray-400 w-24">Last Deposit:</span>
+                <span className="text-black dark:text-white">
+                  {walletSummary.lastDeposit 
+                    ? new Date(walletSummary.lastDeposit).toLocaleDateString()
+                    : "Never"
+                  }
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <Link
+                href="/dashboard/wallets/deposit"
+                className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-4 text-center font-medium text-white hover:bg-opacity-90"
+              >
+                Manage Deposit Wallets
+              </Link>
+            </div>
+          </div>
+
+          <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-stroke-dark dark:bg-box-dark">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-black dark:text-white">
+                Withdrawal Wallets
+              </h3>
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {walletSummary.activeWithdrawalWallets} active
+              </span>
+            </div>
+            
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Manage your withdrawal addresses and submit withdrawal requests
+            </p>
+
+            <div className="space-y-3">
+              <div className="flex items-center text-sm">
+                <span className="text-gray-500 dark:text-gray-400 w-24">Last Withdrawal:</span>
+                <span className="text-black dark:text-white">
+                  {walletSummary.lastWithdrawal 
+                    ? new Date(walletSummary.lastWithdrawal).toLocaleDateString()
+                    : "Never"
+                  }
+                </span>
+              </div>
+              <div className="flex items-center text-sm">
+                <span className="text-gray-500 dark:text-gray-400 w-24">Pending:</span>
+                <span className="text-black dark:text-white">
+                  {walletSummary.pendingWithdrawals} requests
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-6 space-x-3">
+              <Link
+                href="/dashboard/wallets/withdrawal"
+                className="inline-flex items-center justify-center rounded-md bg-success py-2 px-4 text-center font-medium text-white hover:bg-opacity-90"
+              >
+                Withdraw Funds
+              </Link>
+              <Link
+                href="/dashboard/wallets/withdrawal"
+                className="inline-flex items-center justify-center rounded-md bg-primary py-2 px-4 text-center font-medium text-white hover:bg-opacity-90"
+              >
+                Manage Wallets
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Supported Networks */}
+        <div className="rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-stroke-dark dark:bg-box-dark">
+          <h3 className="text-lg font-medium text-black dark:text-white mb-4">
+            Supported Networks
+          </h3>
+          
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="text-2xl mb-2">💚</div>
+              <h4 className="font-medium text-black dark:text-white">USDT</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Tether</p>
+            </div>
+            
+            <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="text-2xl mb-2">🔷</div>
+              <h4 className="font-medium text-black dark:text-white">Ethereum</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">ETH</p>
+            </div>
+            
+            <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="text-2xl mb-2">🟠</div>
+              <h4 className="font-medium text-black dark:text-white">Bitcoin</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">BTC</p>
+            </div>
+            
+            <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="text-2xl mb-2">🟣</div>
+              <h4 className="font-medium text-black dark:text-white">Polygon</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">MATIC</p>
+            </div>
+            
+            <div className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+              <div className="text-2xl mb-2">🟡</div>
+              <h4 className="font-medium text-black dark:text-white">Binance Smart Chain</h4>
+              <p className="text-xs text-gray-500 dark:text-gray-400">BNB</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Important Information */}
+        <div className="mt-6 rounded-sm border border-stroke bg-white p-6 shadow-default dark:border-stroke-dark dark:bg-box-dark">
+          <h3 className="text-lg font-medium text-black dark:text-white mb-4">
+            Important Information
+          </h3>
+          
+          <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <li className="flex items-start">
+              <svg className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Always verify wallet addresses before sending funds
+            </li>
+            <li className="flex items-start">
+              <svg className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Withdrawal wallets must be verified before use
+            </li>
+            <li className="flex items-start">
+              <svg className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Network fees apply and vary by blockchain
+            </li>
+            <li className="flex items-start">
+              <svg className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Keep your private keys secure and never share them
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}

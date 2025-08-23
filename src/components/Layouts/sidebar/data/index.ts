@@ -6,97 +6,149 @@ export const NAV_DATA = [
     items: [
       {
         title: "Dashboard",
+        url: "/dashboard",
         icon: Icons.HomeIcon,
-        items: [
-          {
-            title: "eCommerce",
-            url: "/",
-          },
-        ],
-      },
-      {
-        title: "Calendar",
-        url: "/calendar",
-        icon: Icons.Calendar,
         items: [],
       },
       {
-        title: "Profile",
-        url: "/profile",
-        icon: Icons.User,
-        items: [],
-      },
-      {
-        title: "Forms",
-        icon: Icons.Alphabet,
+        title: "Token Management",
+        icon: Icons.PieChart,
         items: [
           {
-            title: "Form Elements",
-            url: "/forms/form-elements",
+            title: "Overview",
+            url: "/dashboard/tokens/overview",
           },
           {
-            title: "Form Layout",
-            url: "/forms/form-layout",
+            title: "Buy Tokens",
+            url: "/dashboard/tokens/buy",
           },
-        ],
-      },
-      {
-        title: "Tables",
-        url: "/tables",
-        icon: Icons.Table,
-        items: [
           {
-            title: "Tables",
-            url: "/tables",
+            title: "Stake Tokens",
+            url: "/dashboard/tokens/stake",
+          },
+          {
+            title: "Portfolio",
+            url: "/dashboard/tokens/portfolio",
           },
         ],
       },
       {
-        title: "Pages",
+        title: "Referrals",
+        icon: Icons.PieChart,
+        items: [
+          {
+            title: "Referral Link",
+            url: "/dashboard/referrals/link",
+          },
+          {
+            title: "Referral History",
+            url: "/dashboard/referrals/history",
+          },
+        ],
+      },
+      {
+        title: "Wallets",
+        icon: Icons.PieChart,
+        items: [
+          {
+            title: "Deposit Wallet",
+            url: "/dashboard/wallets/deposit",
+          },
+          {
+            title: "Withdrawal Wallet",
+            url: "/dashboard/wallets/withdrawal",
+          },
+          
+        ],
+      },
+      {
+        title: "Support",
         icon: Icons.Alphabet,
         items: [
           {
-            title: "Settings",
-            url: "/pages/settings",
+            title: "Live Chat",
+            url: "#",
+          },
+          {
+            title: "Support Tickets",
+            url: "#",
+          },
+          {
+            title: "Contact Support",
+            url: "https://ditokens.com/contact-us/",
           },
         ],
       },
     ],
   },
   {
-    label: "OTHERS",
+    label: "ACCOUNT",
     items: [
       {
-        title: "Charts",
+        title: "Profile",
+        url: "/dashboard/profile",
+        icon: Icons.User,
+        items: [],
+      },
+  
+      {
+        title: "Settings",
+        icon: Icons.Alphabet,
+        items: [
+
+          {
+            title: "Account Settings",
+            url: "/dashboard/settings",
+          },
+          {
+            title: "Password Change",
+            url: "/dashboard/security/password",
+          },
+          {
+            title: "Login History",
+            url: "/dashboard/security/login-history",
+          },
+        ],
+      },
+
+    ],
+  },
+  {
+    label: "ANALYTICS",
+    items: [
+      {
+        title: "Portfolio",
         icon: Icons.PieChart,
         items: [
           {
-            title: "Basic Chart",
-            url: "/charts/basic-chart",
+            title: "Portfolio Overview",
+            url: "/dashboard/analytics/portfolio",
+          },
+          {
+            title: "Performance Charts",
+            url: "/dashboard/analytics/performance",
+          },
+          {
+            title: "Asset Allocation",
+            url: "/dashboard/analytics/allocation",
           },
         ],
       },
       {
-        title: "UI Elements",
-        icon: Icons.FourCircle,
+        title: "Reports",
+        icon: Icons.PieChart,
         items: [
           {
-            title: "Alerts",
-            url: "/ui-elements/alerts",
+            title: "Monthly Report",
+            url: "/dashboard/analytics/monthly-report",
           },
           {
-            title: "Buttons",
-            url: "/ui-elements/buttons",
+            title: "Tax Report",
+            url: "/dashboard/analytics/tax-report",
           },
-        ],
-      },
-      {
-        title: "Authentication",
-        icon: Icons.Authentication,
-        items: [
           {
-            title: "Sign In",
-            url: "/auth/sign-in",
+            title: "Trading Report",
+            url: "/dashboard/analytics/trading-report",
           },
         ],
       },
