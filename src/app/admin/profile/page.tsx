@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { isAdminUser } from "@/lib/admin-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -48,7 +49,7 @@ export default function AdminProfile() {
   useEffect(() => {
     if (status === "loading") return;
     
-    if (!session || session.user.email !== "admin@ditokens.com") {
+    if (!session || !isAdminUser(session)) {
       router.push("/auth/sign-in");
       return;
     }
@@ -104,7 +105,7 @@ export default function AdminProfile() {
     );
   }
 
-  if (!session || session.user.email !== "admin@ditokens.com") {
+  if (!session || !isAdminUser(session)) {
     return null;
   }
 

@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isAdminUser } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email || session.user.email !== "admin@ditokens.com") {
+    if (!session?.user?.email || !isAdminUser(session)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isAdminUser } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email || session.user.email !== "admin@ditokens.com") {
+    if (!isAdminUser(session)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -45,7 +46,8 @@ export async function GET(request: NextRequest) {
         availableTokens: user.availableTokens || 0,
         totalEarnings: user.totalEarnings || 0,
         referralEarnings: user.referralEarnings || 0,
-      }))
+      })),
+      totalCount: users.length
     });
   } catch (error) {
     console.error("Error fetching users:", error);

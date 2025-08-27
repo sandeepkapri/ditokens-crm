@@ -1,6 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { isSuperAdminUser } from "@/lib/admin-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -46,8 +47,8 @@ export default function AdminPaymentsPage() {
       return;
     }
     
-    if (session?.user?.email !== "admin@ditokens.com") {
-      router.push("/dashboard");
+    if (!isSuperAdminUser(session)) {
+      router.push("/admin/dashboard");
       return;
     }
     
@@ -117,7 +118,7 @@ export default function AdminPaymentsPage() {
     );
   }
 
-  if (!session || session.user.email !== "admin@ditokens.com") {
+  if (!session || !isSuperAdminUser(session)) {
     return null;
   }
 
@@ -127,10 +128,10 @@ export default function AdminPaymentsPage() {
         {/* Page Header */}
         <div className="mb-6">
           <h2 className="text-title-md2 font-bold text-black dark:text-white">
-            Payment Management
+            Withdrawal Management (Superadmin Only)
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-            Approve withdrawals and monitor all transactions
+            Approve or reject withdrawal requests - Superadmin access only
           </p>
         </div>
 

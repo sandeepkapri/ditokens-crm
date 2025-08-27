@@ -130,7 +130,7 @@ export function Notification() {
 
       <DropdownContent
         align={isMobile ? "end" : "center"}
-        className="border border-stroke bg-white px-3.5 py-3 shadow-md dark:border-dark-3 dark:bg-gray-dark min-[350px]:min-w-[22rem]"
+        className="border border-stroke bg-white dark:bg-gray-dark px-3.5 py-3 shadow-md dark:border-dark-3 min-[350px]:min-w-[22rem]"
       >
         <div className="mb-1 flex items-center justify-between px-2 py-1.5">
           <span className="text-lg font-medium text-dark dark:text-white">
@@ -174,7 +174,7 @@ export function Notification() {
                   }}
                   className={cn(
                     "w-full flex items-start gap-3 rounded-lg px-2 py-2 outline-none text-left transition-colors",
-                    "hover:bg-gray-100 focus-visible:bg-gray-100 dark:hover:bg-dark-3 dark:focus-visible:bg-dark-3",
+                    "hover:bg-gray-100 dark:hover:bg-dark-3 focus-visible:bg-gray-100 dark:focus-visible:bg-dark-3",
                     !notification.isRead && "bg-blue-50 dark:bg-blue-900/20"
                   )}
                 >

@@ -14,9 +14,36 @@ async function main() {
   await prisma.profileUpdate.deleteMany();
   await prisma.userSettings.deleteMany();
   await prisma.passwordReset.deleteMany();
+  await prisma.withdrawalRequest.deleteMany();
+  await prisma.commissionSettings.deleteMany();
   await prisma.user.deleteMany();
 
   console.log('🗑️  Cleared existing data');
+
+  // Create superadmin user
+  const superadminPassword = await bcrypt.hash('superadmin123', 12);
+  const superadmin = await prisma.user.create({
+    data: {
+      name: 'Ditokens Superadmin',
+      email: 'superadmin@ditokens.com',
+      password: superadminPassword,
+      contactNumber: '+1 (555) 123-4567',
+      country: 'United States',
+      state: 'California',
+      role: 'SUPERADMIN',
+      isActive: true, // Superadmin is active by default
+      emailVerified: true,
+      referralCode: 'SUPER001',
+      totalTokens: 1000000,
+      stakedTokens: 500000,
+      availableTokens: 500000,
+      totalEarnings: 25000,
+      referralEarnings: 5000,
+      profilePicture: null,
+    },
+  });
+
+  console.log('👑 Created superadmin user:', superadmin.email);
 
   // Create admin user
   const adminPassword = await bcrypt.hash('admin123', 12);
@@ -25,25 +52,35 @@ async function main() {
       name: 'Ditokens Admin',
       email: 'admin@ditokens.com',
       password: adminPassword,
-      contactNumber: '+1 (555) 123-4567',
+      contactNumber: '+1 (555) 123-4568',
       country: 'United States',
       state: 'California',
-      role: 'SUPERADMIN',
-      isActive: true,
+      role: 'ADMIN',
+      isActive: true, // Admin is active by default
       emailVerified: true,
       referralCode: 'ADMIN001',
-      totalTokens: 1000000,
-      stakedTokens: 500000,
-      availableTokens: 500000,
-      totalEarnings: 25000,
-      referralEarnings: 5000,
-      profilePicture: null, // Admin uses default avatar
+      totalTokens: 500000,
+      stakedTokens: 200000,
+      availableTokens: 300000,
+      totalEarnings: 15000,
+      referralEarnings: 3000,
+      profilePicture: null,
     },
   });
 
-  console.log('👑 Created admin user:', admin.email);
+  console.log('👨‍💼 Created admin user:', admin.email);
 
-  // Create regular users
+  // Create commission settings - only referral commission, no staking income
+  await prisma.commissionSettings.create({
+    data: {
+      referralRate: 5.0, // 5% referral commission only
+      updatedBy: superadmin.id,
+    },
+  });
+
+  console.log('💰 Created commission settings');
+
+  // Create regular users (inactive by default)
   const users = [];
   const userData = [
     {
@@ -55,32 +92,32 @@ async function main() {
       totalTokens: 5000,
       stakedTokens: 2000,
       availableTokens: 3000,
-      totalEarnings: 1250,
-      referralEarnings: 250,
+      totalEarnings: 500,
+      referralEarnings: 100,
     },
     {
       name: 'Jane Smith',
       email: 'jane.smith@example.com',
       contactNumber: '+1 (555) 222-2222',
-      country: 'United Kingdom',
-      state: 'London',
-      totalTokens: 8000,
-      stakedTokens: 5000,
-      availableTokens: 3000,
-      totalEarnings: 2000,
-      referralEarnings: 400,
+      country: 'Canada',
+      state: 'Ontario',
+      totalTokens: 3000,
+      stakedTokens: 1000,
+      availableTokens: 2000,
+      totalEarnings: 300,
+      referralEarnings: 50,
     },
     {
       name: 'Mike Johnson',
       email: 'mike.johnson@example.com',
       contactNumber: '+1 (555) 333-3333',
-      country: 'Canada',
-      state: 'Ontario',
-      totalTokens: 3000,
+      country: 'United Kingdom',
+      state: 'London',
+      totalTokens: 4000,
       stakedTokens: 1500,
-      availableTokens: 1500,
-      totalEarnings: 750,
-      referralEarnings: 150,
+      availableTokens: 2500,
+      totalEarnings: 400,
+      referralEarnings: 75,
     },
     {
       name: 'Sarah Wilson',
@@ -88,11 +125,11 @@ async function main() {
       contactNumber: '+1 (555) 444-4444',
       country: 'Australia',
       state: 'New South Wales',
-      totalTokens: 12000,
-      stakedTokens: 8000,
-      availableTokens: 4000,
-      totalEarnings: 3000,
-      referralEarnings: 600,
+      totalTokens: 6000,
+      stakedTokens: 2500,
+      availableTokens: 3500,
+      totalEarnings: 600,
+      referralEarnings: 120,
     },
     {
       name: 'David Brown',
@@ -100,94 +137,31 @@ async function main() {
       contactNumber: '+1 (555) 555-5555',
       country: 'Germany',
       state: 'Bavaria',
-      totalTokens: 6000,
-      stakedTokens: 4000,
-      availableTokens: 2000,
-      totalEarnings: 1500,
-      referralEarnings: 300,
-    },
-    {
-      name: 'Emma Davis',
-      email: 'emma.davis@example.com',
-      contactNumber: '+1 (555) 666-6666',
-      country: 'United States',
-      state: 'Texas',
-      totalTokens: 4000,
-      stakedTokens: 2000,
-      availableTokens: 2000,
-      totalEarnings: 1000,
-      referralEarnings: 200,
-    },
-    {
-      name: 'Alex Taylor',
-      email: 'alex.taylor@example.com',
-      contactNumber: '+1 (555) 777-7777',
-      country: 'United Kingdom',
-      state: 'Manchester',
-      totalTokens: 7000,
-      stakedTokens: 3500,
-      availableTokens: 3500,
-      totalEarnings: 1750,
-      referralEarnings: 350,
-    },
-    {
-      name: 'Lisa Garcia',
-      email: 'lisa.garcia@example.com',
-      contactNumber: '+1 (555) 888-8888',
-      country: 'Spain',
-      state: 'Madrid',
-      totalTokens: 9000,
-      stakedTokens: 6000,
-      availableTokens: 3000,
-      totalEarnings: 2250,
-      referralEarnings: 450,
-    },
-    {
-      name: 'Tom Anderson',
-      email: 'tom.anderson@example.com',
-      contactNumber: '+1 (555) 999-9999',
-      country: 'Netherlands',
-      state: 'North Holland',
-      totalTokens: 5500,
-      stakedTokens: 3000,
-      availableTokens: 2500,
-      totalEarnings: 1375,
-      referralEarnings: 275,
-    },
-    {
-      name: 'Maria Rodriguez',
-      email: 'maria.rodriguez@example.com',
-      contactNumber: '+1 (555) 000-0000',
-      country: 'Italy',
-      state: 'Lombardy',
-      totalTokens: 6500,
-      stakedTokens: 4000,
-      availableTokens: 2500,
-      totalEarnings: 1625,
-      referralEarnings: 325,
+      totalTokens: 3500,
+      stakedTokens: 1200,
+      availableTokens: 2300,
+      totalEarnings: 350,
+      referralEarnings: 60,
     },
   ];
 
   for (const userInfo of userData) {
-    const password = await bcrypt.hash('password123', 12);
-    const referralCode = `REF${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
-    
+    const userPassword = await bcrypt.hash('user123', 12);
     const user = await prisma.user.create({
       data: {
         ...userInfo,
-        password,
+        password: userPassword,
         role: 'USER',
-        isActive: true,
-        emailVerified: true,
-        referralCode,
-        referredBy: admin.referralCode, // All users referred by admin for demo
-        profilePicture: null, // Uses default avatar
+        isActive: false, // Users are inactive by default
+        emailVerified: false,
+        referralCode: `USER${Math.random().toString(36).substr(2, 6).toUpperCase()}`,
+        profilePicture: null,
       },
     });
     users.push(user);
   }
 
-  console.log('👥 Created', users.length, 'regular users');
+  console.log('👥 Created', users.length, 'regular users (inactive by default)');
 
   // Create referral relationships and commissions
   for (let i = 0; i < users.length; i++) {
@@ -195,15 +169,15 @@ async function main() {
     const referredUser = users[(i + 1) % users.length];
     
     if (referrer.id !== referredUser.id) {
-      // Create referral commission
-      const commissionAmount = (referredUser.totalTokens * 2.80 * 0.05) / 100; // 5% commission
+      // Create referral commission (5% of first deposit)
+      const commissionAmount = (referredUser.totalTokens * 2.80 * 0.05) / 100;
       
       await prisma.referralCommission.create({
         data: {
           referrerId: referrer.id,
           referredUserId: referredUser.id,
           amount: commissionAmount,
-          tokenAmount: referredUser.totalTokens * 0.05, // 5% of tokens
+          tokenAmount: referredUser.totalTokens * 0.05,
           pricePerToken: 2.80,
           month: new Date().getMonth() + 1,
           year: new Date().getFullYear(),
@@ -225,107 +199,156 @@ async function main() {
 
   console.log('💰 Created referral commissions');
 
-  // Create staking records
+  // Create staking records (no income)
   for (const user of users) {
     if (user.stakedTokens > 0) {
       await prisma.stakingRecord.create({
         data: {
           userId: user.id,
           amount: user.stakedTokens,
-          apy: 12.5,
-          startDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000), // Random start date within last year
+          apy: 0.0, // No staking income
+          startDate: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000),
           endDate: new Date(Date.now() + (3 * 365 * 24 * 60 * 60 * 1000)), // 3 years from now
           status: 'ACTIVE',
-          rewards: (user.stakedTokens * 2.80 * 0.125) / 12, // Monthly rewards
+          rewards: 0, // No rewards
         },
       });
     }
   }
 
-  console.log('🔒 Created staking records');
+  console.log('🔒 Created staking records (no income)');
 
   // Create transactions
-  const transactionTypes = ['PURCHASE', 'WITHDRAWAL', 'REFERRAL_COMMISSION', 'REWARD'];
+  const transactionTypes = ['PURCHASE', 'WITHDRAWAL', 'REFERRAL_COMMISSION'];
   const transactionStatuses = ['COMPLETED', 'PENDING', 'FAILED'];
   
   for (const user of users) {
-    // Token purchase transactions
-    const purchaseCount = Math.floor(Math.random() * 5) + 1;
+    // Create purchase transactions
+    const purchaseCount = Math.floor(Math.random() * 3) + 1;
     for (let i = 0; i < purchaseCount; i++) {
       const amount = Math.floor(Math.random() * 1000) + 100;
-      const tokens = Math.floor(amount / 2.80);
+      const tokenAmount = amount / 2.80;
       
       await prisma.transaction.create({
         data: {
           userId: user.id,
           type: 'PURCHASE',
-          amount: amount,
-          tokenAmount: tokens,
+          amount,
+          tokenAmount,
           pricePerToken: 2.80,
+          paymentMethod: ['USDT', 'ETH', 'BTC'][Math.floor(Math.random() * 3)],
           status: 'COMPLETED',
-          description: `Token purchase - ${tokens} DIT`,
-          paymentMethod: 'USDT',
-          processingFee: amount * 0.01, // 1% fee
+          description: `Token purchase #${i + 1}`,
+          processingFee: amount * 0.02, // 2% processing fee
         },
       });
     }
 
-    // Withdrawal transactions
-    if (user.totalEarnings > 100) {
-      const withdrawalAmount = Math.min(user.totalEarnings * 0.3, 500); // 30% of earnings, max $500
+    // Create withdrawal requests (pending due to 3-year lock)
+    if (user.availableTokens > 100) {
+      const withdrawalAmount = Math.floor(Math.random() * 500) + 100;
+      const tokenAmount = withdrawalAmount / 2.80;
       
+      await prisma.withdrawalRequest.create({
+        data: {
+          userId: user.id,
+          amount: withdrawalAmount,
+          tokenAmount,
+          network: ['USDT', 'ETH', 'BTC'][Math.floor(Math.random() * 3)],
+          walletAddress: `0x${Math.random().toString(36).substr(2, 40)}`,
+          status: 'PENDING',
+          lockPeriod: 1095, // 3 years
+          canWithdraw: false, // Cannot withdraw yet
+        },
+      });
+
+      // Create corresponding transaction
       await prisma.transaction.create({
         data: {
           userId: user.id,
           type: 'WITHDRAWAL',
           amount: withdrawalAmount,
-          tokenAmount: 0, // No tokens for withdrawal
+          tokenAmount,
           pricePerToken: 2.80,
-          status: Math.random() > 0.2 ? 'COMPLETED' : 'PENDING',
-          description: 'USDT withdrawal request',
-          paymentMethod: 'USDT',
-          processingFee: withdrawalAmount * 0.005, // 0.5% fee
-        },
-      });
-    }
-
-    // Referral commission transactions
-    if (user.referralEarnings > 0) {
-      await prisma.transaction.create({
-        data: {
-          userId: user.id,
-          type: 'REFERRAL',
-          amount: user.referralEarnings,
-          tokenAmount: user.referralEarnings / 2.80, // Convert to tokens
-          pricePerToken: 2.80,
-          status: 'COMPLETED',
-          description: 'Referral commission payment',
-          paymentMethod: 'TOKENS',
-          processingFee: 0,
-        },
-      });
-    }
-
-    // Staking reward transactions
-    if (user.stakedTokens > 0) {
-      const monthlyReward = (user.stakedTokens * 2.80 * 0.125) / 12;
-      await prisma.transaction.create({
-        data: {
-          userId: user.id,
-          type: 'REWARD',
-          amount: monthlyReward,
-          tokenAmount: monthlyReward / 2.80, // Convert to tokens
-          pricePerToken: 2.80,
-          status: 'COMPLETED',
-          description: 'Monthly staking rewards',
-          paymentMethod: 'TOKENS',
+          paymentMethod: 'withdrawal',
+          status: 'PENDING',
+          description: 'Withdrawal request (3-year lock)',
           processingFee: 0,
         },
       });
     }
   }
 
-  console.log('💳 Created transactions');
+  console.log('💳 Created transactions and withdrawal requests');
+
+  // Create comprehensive token prices for current and future months (dummy data for superadmin to edit)
+  const currentDate = new Date();
+  
+  // Clear existing token prices first
+  await prisma.tokenPrice.deleteMany({});
+  
+  // Create comprehensive price data for current month and next month
+  const tokenPrices = [];
+  
+  // Current month (August 2025) - 31 days
+  for (let day = 1; day <= 31; day++) {
+    const entryDate = new Date(2025, 7, day); // August is month 7 (0-indexed)
+    
+    // Generate realistic price progression for current month
+    const basePrice = 2.80;
+    const dayVariation = (day - 15) * 0.01; // Slight trend based on day of month
+    const randomVariation = (Math.random() - 0.5) * 0.08; // ±$0.04 daily variation
+    const price = Math.max(2.50, Math.min(3.20, basePrice + dayVariation + randomVariation));
+    
+    tokenPrices.push({
+      price: Math.round(price * 100) / 100, // Round to 2 decimal places
+      date: entryDate,
+    });
+  }
+  
+  // Next month (September 2025) - 30 days
+  for (let day = 1; day <= 30; day++) {
+    const entryDate = new Date(2025, 8, day); // September is month 8 (0-indexed)
+    
+    // Generate realistic price progression for next month (slight upward trend)
+    const basePrice = 2.85; // Slightly higher base for next month
+    const dayVariation = (day - 15) * 0.008; // Gentler trend
+    const randomVariation = (Math.random() - 0.5) * 0.06; // ±$0.03 daily variation
+    const price = Math.max(2.60, Math.min(3.30, basePrice + dayVariation + randomVariation));
+    
+    tokenPrices.push({
+      price: Math.round(price * 100) / 100, // Round to 2 decimal places
+      date: entryDate,
+    });
+  }
+  
+  // Previous month (July 2025) - 31 days for context
+  for (let day = 1; day <= 31; day++) {
+    const entryDate = new Date(2025, 6, day); // July is month 6 (0-indexed)
+    
+    // Generate realistic price progression for previous month
+    const basePrice = 2.75; // Slightly lower base for previous month
+    const dayVariation = (day - 15) * 0.012; // Trend based on day
+    const randomVariation = (Math.random() - 0.5) * 0.10; // ±$0.05 daily variation
+    const price = Math.max(2.45, Math.min(3.15, basePrice + dayVariation + randomVariation));
+    
+    tokenPrices.push({
+      price: Math.round(price * 100) / 100, // Round to 2 decimal places
+      date: entryDate,
+    });
+  }
+  
+  // Add today's price with current timestamp
+  tokenPrices.push({
+    price: 2.80,
+    date: currentDate,
+  });
+  
+  await prisma.tokenPrice.createMany({
+    data: tokenPrices,
+  });
+
+  console.log(`📈 Created ${tokenPrices.length} token price entries (current and future months for superadmin editing)`);
 
   // Create profile updates history
   for (const user of users) {
@@ -457,10 +480,11 @@ async function main() {
 
   console.log('✅ Database seeding completed successfully!');
   console.log('📊 Summary:');
+  console.log(`   - Superadmin user: ${superadmin.email}`);
   console.log(`   - Admin user: ${admin.email}`);
   console.log(`   - Regular users: ${users.length}`);
   console.log(`   - Referral commissions created`);
-  console.log(`   - Staking records created`);
+  console.log(`   - Staking records created (no income)`);
   console.log(`   - Transactions created`);
   console.log(`   - Profile updates tracked`);
   console.log(`   - User settings configured`);

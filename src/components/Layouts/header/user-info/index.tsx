@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { LogOutIcon, SettingsIcon, UserIcon } from "./icons";
 import { getAvatarUrl } from "@/lib/utils/avatar";
@@ -17,8 +18,14 @@ import { getAvatarUrl } from "@/lib/utils/avatar";
 export function UserInfo() {
   const [isOpen, setIsOpen] = useState(false);
   const { data: session } = useSession();
+  const pathname = usePathname();
   const [profilePicture, setProfilePicture] = useState<string>("");
   const [mounted, setMounted] = useState(false);
+
+  // Check if user is admin/superadmin
+  const isAdmin = session?.user?.email === "admin@ditokens.com";
+  const isSuperAdmin = session?.user?.email === "superadmin@ditokens.com";
+  const isAdminRoute = pathname.startsWith("/admin");
 
   // Ensure client-side rendering
   useEffect(() => {
@@ -121,6 +128,44 @@ export function UserInfo() {
         </figure>
 
         <hr className="border-[#E8E8E8] dark:border-dark-3" />
+
+        {/* Admin Mode Toggle */}
+        {(isAdmin || isSuperAdmin) && (
+          <>
+            <div className="p-2">
+              {isAdminRoute ? (
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsOpen(false)}
+                  className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[9px] bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-800 dark:hover:bg-blue-900/30"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span className="mr-auto text-sm font-medium">Switch to User Mode</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/admin/dashboard"
+                  onClick={() => setIsOpen(false)}
+                  className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-[9px] ${
+                    isSuperAdmin 
+                      ? "bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 dark:bg-purple-900/20 dark:text-purple-300 dark:border-purple-800 dark:hover:bg-purple-900/30"
+                      : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800 dark:hover:bg-red-900/30"
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                  <span className="mr-auto text-sm font-medium">
+                    {isSuperAdmin ? "Super Admin Mode" : "Admin Mode"}
+                  </span>
+                </Link>
+              )}
+            </div>
+            <hr className="border-[#E8E8E8] dark:border-dark-3" />
+          </>
+        )}
 
         <div className="p-2 text-base text-[#4B5563] dark:text-dark-6 [&>*]:cursor-pointer">
           <Link

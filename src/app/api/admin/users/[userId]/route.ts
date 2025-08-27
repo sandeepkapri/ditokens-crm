@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isAdminUser } from "@/lib/admin-auth";
 
 export async function PATCH(
   request: NextRequest,
@@ -9,7 +10,7 @@ export async function PATCH(
 ) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email || session.user.email !== "admin@ditokens.com") {
+    if (!session?.user?.email || !isAdminUser(session)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -27,7 +28,7 @@ export async function PATCH(
     }
 
     // Prevent admin from modifying superadmin
-    if (user.role === "SUPERADMIN" && session.user.email !== "admin@ditokens.com") {
+    if (user.role === "SUPERADMIN" && !isAdminUser(session)) {
       return NextResponse.json({ error: "Cannot modify superadmin user" }, { status: 403 });
     }
 

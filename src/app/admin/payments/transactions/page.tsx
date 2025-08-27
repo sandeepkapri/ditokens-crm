@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { isAdminUser } from "@/lib/admin-auth";
 
 interface Transaction {
   id: string;
@@ -28,7 +29,7 @@ export default function TransactionHistory() {
   useEffect(() => {
     if (status === "loading") return;
     
-    if (!session || session.user.email !== "admin@ditokens.com") {
+    if (!session || !isAdminUser(session)) {
       router.push("/auth/sign-in");
       return;
     }
@@ -166,7 +167,7 @@ export default function TransactionHistory() {
     );
   }
 
-  if (!session || session.user.email !== "admin@ditokens.com") {
+  if (!session || !isAdminUser(session)) {
     return null;
   }
 

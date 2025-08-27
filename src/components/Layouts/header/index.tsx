@@ -17,6 +17,7 @@ export function Header() {
   const { data: session } = useSession();
 
   const isAdmin = session?.user?.email === "admin@ditokens.com";
+  const isSuperAdmin = session?.user?.email === "superadmin@ditokens.com";
   const isAdminRoute = pathname.startsWith("/admin");
 
   // Get page title based on current route
@@ -24,7 +25,7 @@ export function Header() {
     if (isAdminRoute) {
       if (pathname === "/admin/dashboard") return "Admin Dashboard";
       if (pathname === "/admin/users") return "User Management";
-      if (pathname === "/admin/payments") return "Payment Management";
+      if (pathname === "/admin/payments") return "Withdrawal Management";
       if (pathname === "/admin/tokens") return "Token Management";
       if (pathname === "/admin/referrals") return "Referral Management";
       if (pathname === "/admin/staking") return "Staking Management";
@@ -77,9 +78,13 @@ export function Header() {
           <h1 className="mb-0.5 text-heading-5 font-bold text-dark dark:text-white">
             {getPageTitle()}
           </h1>
-          {isAdmin && isAdminRoute && (
-            <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full dark:bg-red-900 dark:text-red-200">
-              ADMIN
+          {(isAdmin || isSuperAdmin) && isAdminRoute && (
+            <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${
+              isSuperAdmin 
+                ? "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200" 
+                : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+            }`}>
+              {isSuperAdmin ? "SUPER ADMIN" : "ADMIN"}
             </span>
           )}
         </div>
@@ -91,7 +96,7 @@ export function Header() {
           <input
             type="search"
             placeholder="Search"
-            className="flex w-full items-center gap-3.5 rounded-full border bg-gray-2 py-3 pl-[53px] pr-5 outline-none transition-colors focus-visible:border-primary dark:border-dark-3 dark:bg-dark-2 dark:hover:border-dark-4 dark:hover:bg-dark-3 dark:hover:text-dark-6 dark:focus-visible:border-primary"
+            className="flex w-full items-center gap-3.5 rounded-full border bg-gray-2 py-3 pl-[53px] pr-5 outline-none transition-colors focus-visible:border-primary dark:border-dark-3 dark:bg-dark-2 dark:hover:border-dark-4 dark:hover:bg-dark-3 dark:hover:text-dark-6 dark:focus-visible:border-primary dark:text-white"
           />
 
           <SearchIcon className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 max-[1015px]:size-5" />

@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { isAdminUser } from "@/lib/admin-auth";
 
 interface User {
   id: string;
@@ -42,7 +43,7 @@ export default function AdminUsersPage() {
       return;
     }
     
-    if (session?.user?.email !== "admin@ditokens.com") {
+    if (!isAdminUser(session)) {
       router.push("/dashboard");
       return;
     }
@@ -107,7 +108,7 @@ export default function AdminUsersPage() {
     );
   }
 
-  if (!session || session.user.email !== "admin@ditokens.com") {
+  if (!isAdminUser(session)) {
     return null;
   }
 

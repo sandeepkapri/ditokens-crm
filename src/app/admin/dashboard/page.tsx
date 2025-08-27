@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { isAdminUser } from "@/lib/admin-auth";
 
 interface AdminStats {
   totalUsers: number;
@@ -53,7 +54,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (status === "loading") return;
     
-    if (!session || session.user.email !== "admin@ditokens.com") {
+    if (!isAdminUser(session)) {
       router.push("/auth/sign-in");
       return;
     }
@@ -120,7 +121,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (!session || session.user.email !== "admin@ditokens.com") {
+  if (!isAdminUser(session)) {
     return null;
   }
 
@@ -131,7 +132,7 @@ export default function AdminDashboard() {
         <div className="mb-6">
           <h2 className="text-title-md2 font-bold text-black dark:text-white">Superadmin Dashboard</h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-            Welcome back, {session.user.name || "Admin"}. Manage your Ditokens CRM system.
+            Welcome back, {session?.user?.name || "Admin"}. Manage your Ditokens CRM system.
           </p>
         </div>
 

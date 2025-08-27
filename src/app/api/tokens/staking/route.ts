@@ -19,14 +19,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get staking information
+    // Get staking information - no rewards, no APY
     const stakingInfo = {
       totalStaked: user.stakedTokens || 0,
       availableTokens: user.availableTokens || 0,
-      stakingRewards: user.totalEarnings || 0,
-      stakingAPY: 12.5, // Fixed APY for now
+      stakingRewards: 0, // No staking rewards
+      stakingAPY: 0, // No staking income
       lockPeriod: 1095, // 3 years in days
-      nextRewardDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // Next month
+      nextRewardDate: null, // No rewards
     };
 
     // Get staking records

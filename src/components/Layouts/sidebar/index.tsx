@@ -7,9 +7,9 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { getNavData } from "./data";
-import { ADMIN_NAV_DATA } from "./data/admin-nav";
+import { getAdminNavData } from "./data/admin-nav";
 import { ArrowLeftIcon, ChevronUp } from "./icons";
-import { MenuItem } from "./menu-item";
+
 import { useSidebarContext } from "./sidebar-context";
 
 export function Sidebar() {
@@ -20,35 +20,23 @@ export function Sidebar() {
 
   // Determine which navigation data to use
   const isAdmin = session?.user?.email === "admin@ditokens.com";
+  const isSuperAdmin = session?.user?.email === "superadmin@ditokens.com";
   const isAdminRoute = pathname.startsWith("/admin");
-  const navData = isAdminRoute ? ADMIN_NAV_DATA : getNavData(isAdmin);
+  const navData = isAdminRoute ? getAdminNavData(isSuperAdmin) : getNavData(isAdmin || isSuperAdmin);
 
   const toggleExpanded = (title: string) => {
-    setExpandedItems((prev) => (prev.includes(title) ? [] : [title]));
-
-    // Uncomment the following line to enable multiple expanded items
-    // setExpandedItems((prev) =>
-    //   prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title],
-    // );
+    setExpandedItems((prev) => {
+      if (prev.includes(title)) {
+        return [];
+      } else {
+        return [title];
+      }
+    });
   };
 
-  useEffect(() => {
-    // Keep collapsible open, when it's subpage is active
-    navData.some((section) => {
-      return section.items.some((item) => {
-        return item.items.some((subItem) => {
-          if (subItem.url === pathname) {
-            if (!expandedItems.includes(item.title)) {
-              toggleExpanded(item.title);
-            }
-
-            // Break the loop
-            return true;
-          }
-        });
-      });
-    });
-  }, [pathname, navData]);
+  const closeAllSubmenus = () => {
+    setExpandedItems([]);
+  };
 
   return (
     <>
@@ -56,7 +44,10 @@ export function Sidebar() {
       {isMobile && isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-300"
-          onClick={() => setIsOpen(false)}
+          onClick={() => {
+            setIsOpen(false);
+            closeAllSubmenus(); // Close submenus when clicking overlay
+          }}
           aria-hidden="true"
         />
       )}
@@ -74,8 +65,13 @@ export function Sidebar() {
         <div className="flex h-full flex-col py-8 pl-[20px] pr-[5px]">
           <div className="relative pr-4">
             <Link
-              href={isAdmin && isAdminRoute ? "/admin/dashboard" : "/dashboard"}
-              onClick={() => isMobile && toggleSidebar()}
+              href={(isAdmin || isSuperAdmin) && isAdminRoute ? "/admin/dashboard" : "/dashboard"}
+              onClick={() => {
+                if (isMobile) {
+                  toggleSidebar();
+                  closeAllSubmenus(); // Close submenus when navigating
+                }
+              }}
               className="px-0 py-2 min-[850px]:py-0"
             >
               <Logo />
@@ -83,7 +79,10 @@ export function Sidebar() {
 
             {isMobile && (
               <button
-                onClick={toggleSidebar}
+                onClick={() => {
+                  toggleSidebar();
+                  closeAllSubmenus(); // Close submenus when closing sidebar
+                }}
                 className="absolute left-3/4 right-4 top-1/2 -translate-y-1/2 text-right"
               >
                 <span className="sr-only">Close Menu</span>
@@ -94,16 +93,28 @@ export function Sidebar() {
           </div>
 
           {/* Admin Badge */}
-          {isAdmin && isAdminRoute && (
-            <div className="mt-3 px-2 py-1.5 bg-red-100 dark:bg-red-900 rounded-lg border border-red-200 dark:border-red-800">
+          {(isAdmin || isSuperAdmin) && isAdminRoute && (
+            <div className={`mt-3 px-2 py-1.5 rounded-lg border ${
+              isSuperAdmin 
+                ? "bg-purple-100 dark:bg-purple-900 border-purple-200 dark:border-purple-800" 
+                : "bg-red-100 dark:bg-red-900 border-red-200 dark:border-red-800"
+            }`}>
               <div className="flex items-center space-x-1.5">
-                <div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div>
-                <span className="text-xs font-medium text-red-700 dark:text-red-300">
-                  SUPER ADMIN MODE
+                <div className={`w-1.5 h-1.5 rounded-full ${
+                  isSuperAdmin ? "bg-purple-500" : "bg-red-500"
+                }`}></div>
+                <span className={`text-xs font-medium ${
+                  isSuperAdmin 
+                    ? "text-purple-700 dark:text-purple-300" 
+                    : "text-red-700 dark:text-red-300"
+                }`}>
+                  {isSuperAdmin ? "SUPER ADMIN MODE" : "ADMIN MODE"}
                 </span>
               </div>
             </div>
           )}
+
+
 
           {/* Navigation */}
           <div className="custom-scrollbar mt-4 flex-1 overflow-y-auto pr-2 min-[850px]:mt-8">
@@ -119,9 +130,12 @@ export function Sidebar() {
                       <li key={item.title}>
                         {item.items.length ? (
                           <div>
-                            <MenuItem
-                              isActive={item.items.some(
-                                ({ url }) => url === pathname,
+                            <button
+                              className={cn(
+                                "flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                                item.items.some(({ url }) => url === pathname)
+                                  ? "bg-[rgba(87,80,241,0.07)] text-primary dark:bg-[#FFFFFF1A] dark:text-white"
+                                  : "text-dark-4 hover:bg-gray-100 hover:text-dark dark:text-dark-6 hover:dark:bg-[#FFFFFF1A] hover:dark:text-white"
                               )}
                               onClick={() => toggleExpanded(item.title)}
                             >
@@ -140,7 +154,7 @@ export function Sidebar() {
                                 )}
                                 aria-hidden="true"
                               />
-                            </MenuItem>
+                            </button>
 
                             {expandedItems.includes(item.title) && (
                               <ul
@@ -149,13 +163,17 @@ export function Sidebar() {
                               >
                                 {item.items.map((subItem) => (
                                   <li key={subItem.title} role="none">
-                                    <MenuItem
-                                      as="link"
+                                    <Link
                                       href={subItem.url}
-                                      isActive={pathname === subItem.url}
+                                      className={cn(
+                                        "relative block rounded-lg px-3 py-1.5 text-xs font-medium transition-all duration-200",
+                                        pathname === subItem.url
+                                          ? "bg-[rgba(87,80,241,0.07)] text-primary dark:bg-[#FFFFFF1A] dark:text-white"
+                                          : "text-dark-4 hover:bg-gray-100 hover:text-dark dark:text-dark-6 hover:dark:bg-[#FFFFFF1A] hover:dark:text-white"
+                                      )}
                                     >
-                                      <span className="text-xs">{subItem.title}</span>
-                                    </MenuItem>
+                                      {subItem.title}
+                                    </Link>
                                   </li>
                                 ))}
                               </ul>
@@ -170,11 +188,14 @@ export function Sidebar() {
                                   item.title.toLowerCase().split(" ").join("-");
 
                             return (
-                              <MenuItem
-                                className="flex items-center gap-2.5 py-2"
-                                as="link"
+                              <Link
                                 href={href}
-                                isActive={pathname === href}
+                                className={cn(
+                                  "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
+                                  pathname === href
+                                    ? "bg-[rgba(87,80,241,0.07)] text-primary dark:bg-[#FFFFFF1A] dark:text-white"
+                                    : "text-dark-4 hover:bg-gray-100 hover:text-dark dark:text-dark-6 hover:dark:bg-[#FFFFFF1A] hover:dark:text-white"
+                                )}
                               >
                                 <item.icon
                                   className="size-5 shrink-0"
@@ -182,7 +203,7 @@ export function Sidebar() {
                                 />
 
                                 <span className="text-sm">{item.title}</span>
-                              </MenuItem>
+                              </Link>
                             );
                           })()
                         )}

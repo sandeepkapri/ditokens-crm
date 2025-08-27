@@ -33,7 +33,11 @@ export function MenuItem(
       <Link
         href={props.href}
         // Close sidebar on clicking link if it's mobile
-        onClick={() => isMobile && toggleSidebar()}
+        onClick={() => {
+          if (isMobile) {
+            toggleSidebar();
+          }
+        }}
         className={cn(
           menuItemBaseStyles({
             isActive: props.isActive,
@@ -47,9 +51,23 @@ export function MenuItem(
     );
   }
 
+  // Default to button behavior when as is not specified
   return (
     <button
-      onClick={props.onClick}
+      onClick={(e) => {
+        console.log('MenuItem button clicked:', e);
+        console.log('Event target:', e.target);
+        console.log('Event currentTarget:', e.currentTarget);
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('Calling onClick function');
+        if ('onClick' in props) {
+          console.log('onClick exists, calling it...');
+          props.onClick();
+        } else {
+          console.log('onClick does not exist in props');
+        }
+      }}
       aria-expanded={props.isActive}
       className={menuItemBaseStyles({
         isActive: props.isActive,

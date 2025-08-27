@@ -19,7 +19,7 @@ model User {
   state             String
   password          String
   role              UserRole  @default(USER)
-  isActive          Boolean   @default(true)
+  isActive          Boolean   @default(false) // Changed to false by default
   emailVerified     Boolean   @default(false)
   referralCode      String    @unique
   referredBy        String?   // Referral code of the user who referred this user
@@ -27,7 +27,7 @@ model User {
   totalTokens       Float     @default(0)
   stakedTokens      Float     @default(0)
   availableTokens   Float     @default(0)
-  totalEarnings     Float     @default(0)
+  totalEarnings     Float     @default(0) // Only price income, no staking rewards
   referralEarnings  Float     @default(0)
   profilePicture    String?   // URL or path to profile picture
   createdAt         DateTime  @default(now())
@@ -45,6 +45,7 @@ model User {
   referrerCommissions ReferralCommission[] @relation("ReferrerCommissions")
   referredUserCommissions ReferralCommission[] @relation("ReferredUserCommissions")
   notifications    Notification[]
+  withdrawalRequests WithdrawalRequest[]
 
   @@map("users")
 }
@@ -65,8 +66,8 @@ model StakingRecord {
   startDate     DateTime @default(now())
   endDate       DateTime
   status        String   @default("ACTIVE") // ACTIVE, COMPLETED, PENDING
-  apy           Float    @default(12.5)
-  rewards       Float    @default(0)
+  apy           Float    @default(0.0) // No staking income - always 0
+  rewards       Float    @default(0) // No staking rewards - always 0
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -117,6 +118,39 @@ model ReferralCommission {
 
   @@unique([referrerId, referredUserId, month, year], name: "referrer_referred_month_year")
   @@map("referral_commissions")
+}
+
+// New model for commission settings - Only referral commission, no staking
+model CommissionSettings {
+  id                String   @id @default(cuid())
+  referralRate      Float    @default(5.0) // Default 5% - only referral commission
+  updatedBy         String   // User ID who updated this
+  updatedAt         DateTime @updatedAt
+  createdAt         DateTime @default(now())
+
+  @@map("commission_settings")
+}
+
+// New model for withdrawal requests with 3-year lock
+model WithdrawalRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  amount        Float
+  tokenAmount   Float
+  network       String
+  walletAddress String
+  status        WithdrawalStatus @default(PENDING)
+  requestDate   DateTime @default(now())
+  processedDate DateTime?
+  lockPeriod    Int      @default(1095) // 3 years in days
+  canWithdraw   Boolean  @default(false) // Only true after 3 years
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("withdrawal_requests")
 }
 
 model Message {
@@ -230,6 +264,13 @@ enum TransactionStatus {
   CANCELLED
 }
 
+enum WithdrawalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+}
+
 enum MessageType {
   EMAIL
   INTERNAL_MESSAGE
@@ -246,18 +287,19 @@ enum ProfileUpdateType {
 
 model Notification {
   id        String   @id @default(cuid())
-  userId    String
+  userId    String?
   type      NotificationType
   title     String
   message   String
   icon      String?  // URL or icon name
   data      Json?    // Additional data for the notification
   isRead    Boolean  @default(false)
+  isGlobal  Boolean  @default(false) // For notifications to all users
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }

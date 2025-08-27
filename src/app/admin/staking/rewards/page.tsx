@@ -30,7 +30,7 @@ export default function RewardsManagement() {
   useEffect(() => {
     if (status === "loading") return;
     
-    if (!session || session.user.email !== "admin@ditokens.com") {
+    if (!session || !isAdminUser(session)) {
       router.push("/auth/sign-in");
       return;
     }
@@ -168,7 +168,7 @@ export default function RewardsManagement() {
     );
   }
 
-  if (!session || session.user.email !== "admin@ditokens.com") {
+  if (!session || !isAdminUser(session)) {
     return null;
   }
 

@@ -10,63 +10,48 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { searchParams } = new URL(request.url);
-    const timeframe = searchParams.get("timeframe") || "7d";
-
-    // Current price (this would come from a price feed in production)
-    const currentPrice = 2.8;
-
-    // Generate historical price data based on timeframe
-    let priceData = [];
-    const now = new Date();
-    let days = 7;
-
+    // Get timeframe from query params
+    const url = new URL(request.url);
+    const timeframe = url.searchParams.get("timeframe") || "7d";
+    
+    // Calculate days based on timeframe
+    let days: number;
     switch (timeframe) {
-      case "1d":
-        days = 1;
-        break;
-      case "7d":
-        days = 7;
-        break;
-      case "1m":
-        days = 30;
-        break;
-      case "3m":
-        days = 90;
-        break;
-      case "1y":
-        days = 365;
-        break;
-      default:
-        days = 7;
+      case "1d": days = 1; break;
+      case "7d": days = 7; break;
+      case "1m": days = 30; break;
+      case "3m": days = 90; break;
+      case "1y": days = 365; break;
+      default: days = 7;
     }
 
-    // Generate mock price data with realistic variations
-    for (let i = days; i >= 0; i--) {
-      const date = new Date(now);
-      date.setDate(date.getDate() - i);
-      
-      // Add some realistic price volatility
-      const volatility = 0.05; // 5% daily volatility
-      const randomChange = (Math.random() - 0.5) * volatility;
-      const price = currentPrice * (1 + randomChange);
-      
-      priceData.push({
-        date: date.toISOString().split('T')[0],
-        price: parseFloat(price.toFixed(2)),
-        volume: Math.floor(Math.random() * 1000000) + 500000, // Random volume between 500K and 1.5M
-      });
-    }
+    // Get token prices for the specified timeframe
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
 
-    return NextResponse.json({
-      currentPrice,
-      priceData,
-      timeframe,
-    }, { status: 200 });
+    const prices = await prisma.tokenPrice.findMany({
+      where: {
+        date: {
+          gte: startDate,
+        },
+      },
+      orderBy: { date: "asc" }, // Changed to ascending for chart display
+      take: days * 2, // Get more points if available
+    });
+
+    return NextResponse.json({ 
+      priceData: prices.map(price => ({
+        date: price.date.toISOString().split('T')[0],
+        price: Number(price.price),
+        volume: 0 // Since we don't track volume yet
+      })),
+      count: prices.length,
+      timeframe: timeframe
+    });
   } catch (error) {
-    console.error("Error fetching token price:", error);
+    console.error("Error fetching token prices:", error);
     return NextResponse.json(
-      { error: "Failed to fetch token price data" },
+      { error: "Failed to fetch token prices" },
       { status: 500 }
     );
   }

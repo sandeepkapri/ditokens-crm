@@ -1,6 +1,7 @@
 import * as Icons from "../icons";
 
-export const ADMIN_NAV_DATA = [
+// Function to get navigation data based on user role
+export const getAdminNavData = (isSuperAdmin: boolean) => [
   {
     label: "ADMIN DASHBOARD",
     items: [
@@ -29,10 +30,6 @@ export const ADMIN_NAV_DATA = [
         icon: Icons.PieChart,
         items: [
           {
-            title: "Withdrawal Approvals",
-            url: "/admin/payments",
-          },
-          {
             title: "Transaction History",
             url: "/admin/payments/transactions",
           },
@@ -48,14 +45,19 @@ export const ADMIN_NAV_DATA = [
           },
           {
             title: "Price Management",
-            url: "/admin/tokens/price",
+            url: "/admin/token-price",
+            // Both admin and superadmin can access
           },
         ],
       },
       {
-        title: "Referral System",
+        title: "Commission Management",
         icon: Icons.PieChart,
         items: [
+          {
+            title: "Commission Settings",
+            url: "/admin/commission-settings",
+          },
           {
             title: "Referral Overview",
             url: "/admin/referrals",
@@ -81,71 +83,103 @@ export const ADMIN_NAV_DATA = [
         ],
       },
       {
-        title: "System Management",
+        title: "Communication",
         icon: Icons.Alphabet,
         items: [
           {
-            title: "Change History",
-            url: "/admin/history",
+            title: "Notification Management",
+            url: "/admin/notifications",
           },
+          {
+            title: "Send Messages",
+            url: "/admin/messages",
+          },
+          {
+            title: "Message History",
+            url: "/admin/messages/history",
+          },
+        ],
+      },
+      {
+        title: "Reports & Analytics",
+        icon: Icons.Alphabet,
+        items: [
+          {
+            title: "Generate Reports",
+            url: "/admin/reports",
+          },
+          {
+            title: "System Analytics",
+            url: "/admin/analytics",
+          },
+        ],
+      },
+      {
+        title: "System Management",
+        icon: Icons.Alphabet,
+        items: [
           {
             title: "System Settings",
             url: "/admin/settings",
           },
           {
             title: "Audit Logs",
-            url: "/admin/audit",
+            url: "/admin/logs",
           },
         ],
       },
     ],
   },
-  {
-    label: "QUICK ACTIONS",
-    items: [
-      {
-        title: "Approve Withdrawals",
-        url: "/admin/payments",
-        icon: Icons.PieChart,
-        items: [],
-      },
-      {
-        title: "Update Token Price",
-        url: "/admin/tokens",
-        icon: Icons.PieChart,
-        items: [],
-      },
-      {
-        title: "User Management",
-        url: "/admin/users",
-        icon: Icons.User,
-        items: [],
-      },
-    ],
-  },
-  {
-    label: "ACCOUNT",
-    items: [
-      {
-        title: "Switch to User View",
-        url: "/dashboard",
-        icon: Icons.User,
-        items: [],
-      },
-      {
-        title: "Admin Settings",
-        icon: Icons.Alphabet,
-        items: [
-          {
-            title: "Profile Settings",
-            url: "/admin/profile",
-          },
-          {
-            title: "Security Settings",
-            url: "/admin/security",
-          },
-        ],
-      },
-    ],
-  },
+  ...(isSuperAdmin ? [
+    {
+      label: "SUPERADMIN ONLY",
+      items: [
+        {
+          title: "System Administration",
+          icon: Icons.PieChart,
+          items: [
+            {
+              title: "User Role Management",
+              url: "/admin/users/roles",
+            },
+            {
+              title: "System Settings",
+              url: "/admin/system/settings",
+            },
+            {
+              title: "Database Management",
+              url: "/admin/system/database",
+            },
+          ],
+        },
+        {
+          title: "Advanced Analytics",
+          icon: Icons.PieChart,
+          items: [
+            {
+              title: "Platform Analytics",
+              url: "/admin/analytics/platform",
+            },
+            {
+              title: "Revenue Reports",
+              url: "/admin/analytics/revenue",
+            },
+          ],
+        },
+        {
+          title: "Withdrawal Management",
+          icon: Icons.PieChart,
+          items: [
+            {
+              title: "Withdrawal Approvals",
+              url: "/admin/payments",
+            },
+          ],
+        },
+      ],
+    }
+  ] : []),
 ];
+
+// Keep the original export for backward compatibility
+export const ADMIN_NAV_DATA = getAdminNavData(false);

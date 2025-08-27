@@ -66,14 +66,8 @@ export const NotificationHelpers = {
   },
 
   async onStakingReward(userId: string, rewardAmount: number, stakingAmount: number) {
-    return createNotification({
-      userId,
-      type: "STAKING",
-      title: "Staking Rewards Received",
-      message: `You received $${rewardAmount.toFixed(2)} in staking rewards from your ${stakingAmount} DIT stake`,
-      icon: "🏆",
-      data: { rewardAmount, stakingAmount, type: "reward" },
-    });
+    // Staking rewards disabled - no notification sent
+    return null;
   },
 
   async onWithdrawalRequest(userId: string, amount: number, status: string) {

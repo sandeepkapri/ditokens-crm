@@ -40,7 +40,7 @@ export default function TokenPriceManagement() {
   useEffect(() => {
     if (status === "loading") return;
     
-    if (!session || session.user.email !== "admin@ditokens.com") {
+    if (!session || !isAdminUser(session)) {
       router.push("/auth/sign-in");
       return;
     }
@@ -129,7 +129,7 @@ export default function TokenPriceManagement() {
     );
   }
 
-  if (!session || session.user.email !== "admin@ditokens.com") {
+  if (!session || !isAdminUser(session)) {
     return null;
   }
 

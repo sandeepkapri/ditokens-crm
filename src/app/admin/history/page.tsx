@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { isAdminUser } from "@/lib/admin-auth";
 
 interface ChangeRecord {
   id: string;
@@ -76,7 +77,7 @@ export default function AdminHistoryPage() {
     );
   }
 
-  if (!session || session.user.email !== "admin@ditokens.com") {
+  if (!session || !isAdminUser(session)) {
     return null;
   }
 
