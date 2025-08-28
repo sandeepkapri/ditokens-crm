@@ -27,11 +27,11 @@ export default function ProfilePage() {
     if (status === "unauthenticated") {
       router.push("/auth/sign-in");
     }
-    
+
     if (session?.user) {
       // Load current profile data
       loadProfileData();
-      
+
       // Fetch profile update history
       fetchUpdateHistory();
     }
@@ -115,7 +115,7 @@ export default function ProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     try {
       const updateData: any = {
         name: formData.name,
@@ -156,7 +156,7 @@ export default function ProfilePage() {
         setIsEditing(false);
         setUploadingPicture(false);
         alert("Profile updated successfully!");
-        
+
         // Refresh profile update history
         fetchUpdateHistory();
       } else {
@@ -187,67 +187,37 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Profile Picture Section */}
-          <div className="lg:col-span-1">
-            <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-stroke-dark dark:bg-box-dark">
-              <h3 className="text-lg font-medium text-black dark:text-white mb-4">
-                Profile Picture
-              </h3>
-              
-              <div className="flex flex-col items-center">
-                <div className="relative mb-4">
-                  <Image
-                    src={session.user?.image || "/images/user/user-03.png"}
-                    alt="Profile Picture"
-                    width={120}
-                    height={120}
-                    className="rounded-full border-4 border-gray-200 dark:border-gray-600"
-                  />
-                  {isEditing && (
-                    <button className="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full hover:bg-opacity-90">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                    </button>
-                  )}
-                </div>
-                
-                <h4 className="text-lg font-semibold text-black dark:text-white mb-1">
-                  {session.user?.name || "Guest User"}
-                </h4>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  {session.user?.email || "guest@ditokens.com"}
-                </p>
-                
-                {isEditing && (
-                  <button className="w-full bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 py-2 px-4 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors">
-                    Change Picture
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
+        <div className="w-full">
 
           {/* Profile Information Section */}
-          <div className="lg:col-span-2">
+          <div className="w-full">
             <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-stroke-dark dark:bg-box-dark">
               <h3 className="text-lg font-medium text-black dark:text-white mb-4">
                 Personal Information
               </h3>
-              
+
               <form onSubmit={handleSubmit}>
                 {/* Profile Picture Section */}
                 <div className="mb-8 text-center">
                   <div className="relative inline-block">
                     <div className="w-32 h-32 rounded-full mx-auto mb-4 overflow-hidden border-4 border-gray-200 dark:border-gray-600">
-                      <Image
-                        src={profilePicturePreview}
-                        alt="Profile Picture"
-                        width={128}
-                        height={128}
-                        className="w-full h-full object-cover"
-                      />
+                      {profilePicturePreview ? (
+                        <Image
+                          src={profilePicturePreview}
+                          alt="Profile Picture"
+                          width={128}
+                          height={128}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <Image
+                          src="/default-avatar.png" // <- put a file in /public
+                          alt="Default Profile Picture"
+                          width={128}
+                          height={128}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
                     </div>
                     {isEditing && (
                       <div>
@@ -403,18 +373,18 @@ export default function ProfilePage() {
             <h3 className="text-lg font-medium text-black dark:text-white mb-4">
               Account Statistics
             </h3>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="text-center">
                 <div className="text-2xl font-bold text-primary mb-1">0</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Total Tokens</div>
               </div>
-              
+
               <div className="text-center">
                 <div className="text-2xl font-bold text-success mb-1">0</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Staked Tokens</div>
               </div>
-              
+
               <div className="text-center">
                 <div className="text-2xl font-bold text-warning mb-1">$0.00</div>
                 <div className="text-sm text-gray-500 dark:text-gray-400">Referral Earnings</div>
@@ -429,7 +399,7 @@ export default function ProfilePage() {
             <h3 className="text-lg font-medium text-black dark:text-white mb-4">
               Profile Update History
             </h3>
-            
+
             {loadingHistory ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
