@@ -48,6 +48,11 @@ export const getAdminNavData = (isSuperAdmin: boolean) => [
             url: "/admin/token-price",
             // Both admin and superadmin can access
           },
+          {
+            title: "Supply Management",
+            url: "/admin/token-supply",
+            // Superadmin only - 50M limit management
+          },
         ],
       },
       {
@@ -100,20 +105,7 @@ export const getAdminNavData = (isSuperAdmin: boolean) => [
           },
         ],
       },
-      {
-        title: "Reports & Analytics",
-        icon: Icons.Alphabet,
-        items: [
-          {
-            title: "Generate Reports",
-            url: "/admin/reports",
-          },
-          {
-            title: "System Analytics",
-            url: "/admin/analytics",
-          },
-        ],
-      },
+
       {
         title: "System Management",
         icon: Icons.Alphabet,

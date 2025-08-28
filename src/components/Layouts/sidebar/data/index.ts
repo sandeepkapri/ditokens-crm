@@ -26,10 +26,6 @@ export const NAV_DATA = [
             title: "Stake Tokens",
             url: "/dashboard/tokens/stake",
           },
-          {
-            title: "Portfolio",
-            url: "/dashboard/tokens/portfolio",
-          },
         ],
       },
       {
@@ -67,11 +63,7 @@ export const NAV_DATA = [
         items: [
           {
             title: "Live Chat",
-            url: "#",
-          },
-          {
-            title: "Support Tickets",
-            url: "#",
+            url: "/dashboard/support",
           },
           {
             title: "Contact Support",
@@ -113,47 +105,7 @@ export const NAV_DATA = [
 
     ],
   },
-  {
-    label: "ANALYTICS",
-    items: [
-      {
-        title: "Portfolio",
-        icon: Icons.PieChart,
-        items: [
-          {
-            title: "Portfolio Overview",
-            url: "/dashboard/analytics/portfolio",
-          },
-          {
-            title: "Performance Charts",
-            url: "/dashboard/analytics/performance",
-          },
-          {
-            title: "Asset Allocation",
-            url: "/dashboard/analytics/allocation",
-          },
-        ],
-      },
-      {
-        title: "Reports",
-        icon: Icons.PieChart,
-        items: [
-          {
-            title: "Monthly Report",
-            url: "/dashboard/analytics/monthly-report",
-          },
-          {
-            title: "Tax Report",
-            url: "/dashboard/analytics/tax-report",
-          },
-          {
-            title: "Trading Report",
-            url: "/dashboard/analytics/trading-report",
-          },
-        ],
-      },
-    ],
-  },
+
 ];
 
 // Function to get navigation data with admin access for admin users

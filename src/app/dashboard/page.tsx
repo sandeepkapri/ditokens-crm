@@ -73,9 +73,10 @@ export default function Dashboard() {
 
       if (pricesResponse.ok) {
         const pricesData = await pricesResponse.json();
-        setTokenPrices(pricesData.prices || []);
-        if (pricesData.prices && pricesData.prices.length > 0) {
-          setCurrentPrice(pricesData.prices[0].price);
+        console.log('Price API response:', pricesData);
+        setTokenPrices(pricesData.priceData || []);
+        if (pricesData.priceData && pricesData.priceData.length > 0) {
+          setCurrentPrice(pricesData.priceData[0].price);
         }
       }
     } catch (error) {
@@ -106,30 +107,7 @@ export default function Dashboard() {
     ].filter(item => item.value > 0);
   };
 
-  const getTransactionVolumeData = () => {
-    // Mock data for transaction volume - in real app, fetch from API
-    return {
-      categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-      series: [
-        {
-          name: "Token Purchases",
-          data: [65, 78, 90, 85, 95, 110]
-        },
-        {
-          name: "Withdrawals",
-          data: [25, 30, 35, 40, 45, 50]
-        }
-      ]
-    };
-  };
 
-  const getUsersGrowthData = () => {
-    // Mock data for user growth - in real app, fetch from API
-    return {
-      categories: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-      series: [120, 150, 180, 220, 280, 350]
-    };
-  };
 
   if (status === "loading" || isLoading) {
     return (
@@ -149,8 +127,6 @@ export default function Dashboard() {
 
   const priceChartData = getTokenPriceChartData();
   const portfolioData = getPortfolioDistributionData();
-  const transactionData = getTransactionVolumeData();
-  const usersData = getUsersGrowthData();
 
   return (
     <div className="mx-auto max-w-7xl">
@@ -168,22 +144,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Account Status Alert */}
-      {userStats && !userStats.isActive && (
-        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-          <div className="flex items-center">
-            <div className="text-2xl mr-3">⚠️</div>
-            <div>
-              <h3 className="font-medium text-yellow-800 dark:text-yellow-200">
-                Account Inactive
-              </h3>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                Your account is currently inactive. Please contact support to activate your account.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Token Balance Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -252,6 +213,41 @@ export default function Dashboard() {
             <p className="text-sm text-gray-500 mt-1">
               Price income only - no staking rewards
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Token Supply Status */}
+      <div className="mb-8 rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
+          🪙 Token Supply Status (50M Total Limit)
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-blue-600">50.0M</div>
+            <div className="text-sm text-gray-500">Total Supply</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-green-600">~2.5M</div>
+            <div className="text-sm text-gray-500">Tokens Sold</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-orange-600">~47.5M</div>
+            <div className="text-sm text-gray-500">Available for Sale</div>
+          </div>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+          <div 
+            className="bg-blue-600 h-3 rounded-full"
+            style={{ width: '5%' }}
+          ></div>
+        </div>
+        <div className="text-center text-sm text-gray-500 mt-2">
+          5% of total supply utilized
+        </div>
+        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+          <div className="text-sm text-blue-700 dark:text-blue-300 text-center">
+            <strong>System Limit:</strong> Maximum 50,000,000 tokens can ever exist
           </div>
         </div>
       </div>
@@ -349,86 +345,7 @@ export default function Dashboard() {
           )}
         </div>
 
-        {/* Transaction Volume Chart */}
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-          <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-            Transaction Volume
-          </h3>
-          <Chart
-            options={{
-              chart: {
-                type: 'bar',
-                toolbar: { show: false },
-                zoom: { enabled: false }
-              },
-              colors: ['#10B981', '#EF4444'],
-              xaxis: {
-                categories: transactionData.categories,
-                labels: { style: { colors: '#6B7280' } }
-              },
-              yaxis: {
-                labels: { style: { colors: '#6B7280' } }
-              },
-              grid: {
-                borderColor: '#E5E7EB',
-                strokeDashArray: 5
-              },
-              dataLabels: { enabled: false },
-              legend: {
-                position: 'top',
-                labels: { colors: '#6B7280' }
-              }
-            }}
-            series={transactionData.series}
-            type="bar"
-            height={300}
-          />
-        </div>
 
-        {/* Users Growth Chart */}
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
-          <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-            Platform Growth
-          </h3>
-          <Chart
-            options={{
-              chart: {
-                type: 'area',
-                toolbar: { show: false },
-                zoom: { enabled: false }
-              },
-              colors: ['#8B5CF6'],
-              xaxis: {
-                categories: usersData.categories,
-                labels: { style: { colors: '#6B7280' } }
-              },
-              yaxis: {
-                labels: { style: { colors: '#6B7280' } }
-              },
-              grid: {
-                borderColor: '#E5E7EB',
-                strokeDashArray: 5
-              },
-              stroke: {
-                curve: 'smooth',
-                width: 3
-              },
-              fill: {
-                type: 'gradient',
-                gradient: {
-                  shadeIntensity: 1,
-                  opacityFrom: 0.7,
-                  opacityTo: 0.2,
-                  stops: [0, 90, 100]
-                }
-              },
-              dataLabels: { enabled: false }
-            }}
-            series={[{ name: 'Active Users', data: usersData.series }]}
-            type="area"
-            height={300}
-          />
-        </div>
       </div>
 
       {/* Withdrawal Status */}

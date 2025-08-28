@@ -3,6 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { isSuperAdminUser } from "@/lib/admin-auth";
 
 interface TokenPrice {
   id: string;
@@ -40,8 +41,8 @@ export default function TokenPriceManagement() {
   useEffect(() => {
     if (status === "loading") return;
     
-    if (!session || !isAdminUser(session)) {
-      router.push("/auth/sign-in");
+    if (!session || !isSuperAdminUser(session)) {
+      router.push("/admin/dashboard");
       return;
     }
 
@@ -129,7 +130,7 @@ export default function TokenPriceManagement() {
     );
   }
 
-  if (!session || !isAdminUser(session)) {
+  if (!session || !isSuperAdminUser(session)) {
     return null;
   }
 

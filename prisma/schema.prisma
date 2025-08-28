@@ -193,6 +193,18 @@ model SystemSettings {
   @@map("system_settings")
 }
 
+model TokenSupply {
+  id                String   @id @default(cuid())
+  totalSupply       Float    @default(50000000) // 50M total token supply limit
+  tokensSold        Float    @default(0) // Total tokens sold so far
+  tokensAvailable   Float    @default(50000000) // Remaining tokens for sale
+  updatedBy         String
+  updatedAt         DateTime @updatedAt
+  createdAt         DateTime @default(now())
+
+  @@map("token_supply")
+}
+
 model PasswordReset {
   id        String   @id @default(cuid())
   email     String

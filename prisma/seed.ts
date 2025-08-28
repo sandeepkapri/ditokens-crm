@@ -16,6 +16,7 @@ async function main() {
   await prisma.passwordReset.deleteMany();
   await prisma.withdrawalRequest.deleteMany();
   await prisma.commissionSettings.deleteMany();
+  await prisma.tokenSupply.deleteMany();
   await prisma.user.deleteMany();
 
   console.log('🗑️  Cleared existing data');
@@ -79,6 +80,18 @@ async function main() {
   });
 
   console.log('💰 Created commission settings');
+
+  // Create token supply tracking (50M total supply limit)
+  await prisma.tokenSupply.create({
+    data: {
+      totalSupply: 50000000, // 50M tokens
+      tokensSold: 0, // Start with 0 sold
+      tokensAvailable: 50000000, // All 50M available initially
+      updatedBy: superadmin.id,
+    },
+  });
+
+  console.log('🪙 Created token supply tracking (50M limit)');
 
   // Create regular users (inactive by default)
   const users = [];

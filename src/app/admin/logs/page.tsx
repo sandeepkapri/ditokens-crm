@@ -8,7 +8,7 @@ import { isAdminUser } from "@/lib/admin-auth";
 export default function AdminLogs() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
