@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { sendLoginNotification } from "@/lib/email-events";
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -41,6 +42,22 @@ export async function POST(request: NextRequest) {
         { error: "Invalid credentials" },
         { status: 401 }
       );
+    }
+
+    // Send login notification email
+    try {
+      await sendLoginNotification(user.id, {
+        email: user.email,
+        name: user.name
+      }, {
+        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
+        userAgent: request.headers.get('user-agent') || 'unknown',
+        timestamp: new Date()
+      });
+      console.log(`Login notification sent to ${user.email}`);
+    } catch (emailError) {
+      console.error('Failed to send login notification:', emailError);
+      // Don't fail the login if email fails
     }
 
     // Return user data (password will be handled by NextAuth)

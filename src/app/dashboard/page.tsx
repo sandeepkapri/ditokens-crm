@@ -90,7 +90,16 @@ export default function Dashboard() {
   const getTokenPriceChartData = () => {
     if (!tokenPrices || tokenPrices.length === 0) return { series: [], categories: [] };
     
-    const sortedPrices = [...tokenPrices].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const today = new Date();
+    today.setHours(23, 59, 59, 999); // End of today
+    
+    // Filter out future dates and sort by date
+    const filteredPrices = tokenPrices.filter(price => {
+      const priceDate = new Date(price.date);
+      return priceDate <= today; // Only include dates up to today
+    });
+    
+    const sortedPrices = [...filteredPrices].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const categories = sortedPrices.map(p => new Date(p.date).toLocaleDateString());
     const series = sortedPrices.map(p => p.price);
     

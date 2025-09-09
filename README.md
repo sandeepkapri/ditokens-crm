@@ -24,7 +24,9 @@ A comprehensive CRM application built with Next.js 15+ for managing token sales,
 
 ### 💬 Communication Tools
 - Internal messaging system
-- Email functionality
+- **Automated email system** with multiple provider support (Zoho, Gmail, SendGrid, custom SMTP)
+- **Event-driven emails** for signup, login, payments, purchases, staking, and password resets
+- **Customizable email templates** with responsive design
 - Live chat integration
 - Client communication management
 
@@ -70,12 +72,17 @@ A comprehensive CRM application built with Next.js 15+ for managing token sales,
    cp .env.example .env
    ```
    
-   Update `.env` with your database credentials:
+   Update `.env` with your database credentials and email configuration:
    ```env
    DATABASE_URL="mysql://username:password@localhost:3306/ditokens_crm"
    NEXTAUTH_SECRET="your-secret-key-here"
    NEXTAUTH_URL="http://localhost:3000"
    JWT_SECRET="your-jwt-secret-here"
+   
+   # Email Configuration (see env.example for all options)
+   EMAIL_PROVIDER="zoho"
+   ZOHO_EMAIL="your-email@zoho.com"
+   ZOHO_PASSWORD="your-zoho-app-password"
    ```
 
 4. **Set up the database**
@@ -146,7 +153,11 @@ src/
 ├── components/            # Reusable components
 ├── lib/                   # Utility libraries
 │   ├── auth.ts           # NextAuth configuration
-│   └── prisma.ts         # Prisma client
+│   ├── prisma.ts         # Prisma client
+│   ├── email.ts          # Email service configuration
+│   └── email-events.ts   # Email event handlers
+├── templates/             # Email templates
+│   └── emails/           # Handlebars email templates
 ├── types/                 # TypeScript type definitions
 └── utils/                 # Helper functions
 ```
@@ -195,6 +206,31 @@ npx prisma migrate dev --name <migration-name>
 ## License
 
 This project is licensed under the MIT License.
+
+## Email System
+
+The application includes a comprehensive email system that automatically sends emails for various user events:
+
+### Supported Email Providers
+- **Zoho** (recommended for business use)
+- **Gmail** (with app password)
+- **SendGrid** (for high-volume sending)
+- **Custom SMTP** (any email provider)
+- **Local Sendmail** (for VPS deployments)
+
+### Automatic Email Events
+- Welcome emails on user signup
+- Login notifications with security details
+- Payment confirmations with receipts
+- Purchase confirmations for token buys
+- Stake confirmations with reward details
+- Password reset requests
+- Custom notifications and announcements
+
+### Email Templates
+All emails use responsive HTML templates with Handlebars for dynamic content. Templates are fully customizable and located in `src/templates/emails/`.
+
+For detailed email system documentation, see [EMAIL_SYSTEM_README.md](./EMAIL_SYSTEM_README.md).
 
 ## Support
 

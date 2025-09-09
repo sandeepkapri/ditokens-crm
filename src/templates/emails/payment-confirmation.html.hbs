@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Confirmation - DiTokens CRM</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .success-message {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .receipt {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .receipt-header {
+            text-align: center;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .receipt-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px 0;
+        }
+        .receipt-row.total {
+            border-top: 2px solid #dee2e6;
+            padding-top: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .receipt-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .receipt-value {
+            color: #6c757d;
+        }
+        .total .receipt-value {
+            color: #27ae60;
+            font-size: 20px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+        .status-badge {
+            background-color: #27ae60;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✅ Payment Confirmed!</h1>
+            <p>Your transaction has been processed successfully</p>
+        </div>
+        
+        <div class="content">
+            <div class="success-message">
+                <h2>Hello {{name}},</h2>
+                <p>Great news! Your payment has been processed and confirmed. Here are the details of your transaction.</p>
+                <div class="status-badge">PAID</div>
+            </div>
+            
+            <div class="receipt">
+                <div class="receipt-header">
+                    <h3>📄 Transaction Receipt</h3>
+                    <p style="color: #6c757d; margin: 0;">Transaction ID: {{transactionId}}</p>
+                </div>
+                
+                <div class="receipt-row">
+                    <span class="receipt-label">Payment Date:</span>
+                    <span class="receipt-value">{{paymentDate}}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Payment Method:</span>
+                    <span class="receipt-value">{{paymentMethod}}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Payment Type:</span>
+                    <span class="receipt-value">{{paymentType}}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Description:</span>
+                    <span class="receipt-value">{{description}}</span>
+                </div>
+                <div class="receipt-row">
+                    <span class="receipt-label">Processing Fee:</span>
+                    <span class="receipt-value">{{processingFee}}</span>
+                </div>
+                <div class="receipt-row total">
+                    <span class="receipt-label">Total Amount:</span>
+                    <span class="receipt-value">{{amount}}</span>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{dashboardUrl}}" class="cta-button">View Dashboard →</a>
+            </div>
+            
+            <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h4>🎯 What happens next?</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Your account balance will be updated within 24 hours</li>
+                    <li>You'll receive a confirmation email for your records</li>
+                    <li>Start trading or staking with your new funds</li>
+                </ul>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; text-align: center;">
+                <strong>Need help?</strong> Contact our support team at support@ditokens.com or visit our help center.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2024 DiTokens CRM. All rights reserved.</p>
+            <p style="font-size: 12px; color: #bdc3c7;">
+                This email confirms your payment. Please keep it for your records.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

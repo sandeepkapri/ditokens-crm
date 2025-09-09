@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { sendWelcomeEmail } from "@/lib/email-events";
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -59,6 +60,7 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         referralCode: userReferralCode,
         referredBy: referrerId,
+        isActive: true, // Set user as active by default
       },
       select: {
         id: true,
@@ -83,6 +85,18 @@ export async function POST(request: NextRequest) {
           year: new Date().getFullYear(),
         },
       });
+    }
+
+    // Send welcome email
+    try {
+      await sendWelcomeEmail(user.id, {
+        email: user.email,
+        name: user.name
+      });
+      console.log(`Welcome email sent to ${user.email}`);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Don't fail the signup if email fails
     }
 
     return NextResponse.json({

@@ -61,7 +61,16 @@ export default function TokenOverviewPage() {
         console.log("Price data received:", data);
         console.log("Number of data points:", data.priceData?.length || 0);
         console.log("Sample data point:", data.priceData?.[0]);
-        setPriceData(data.priceData || []);
+        
+        // Filter out future dates as additional safety
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+        const filteredData = (data.priceData || []).filter((item: PriceData) => {
+          const itemDate = new Date(item.date);
+          return itemDate <= today;
+        });
+        
+        setPriceData(filteredData);
       } else {
         console.error("Failed to fetch price data:", priceResponse.status);
         const errorText = await priceResponse.text();

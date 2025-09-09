@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stake Confirmation - DiTokens CRM</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .success-message {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .stake-details {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px 0;
+        }
+        .detail-row.total {
+            border-top: 2px solid #dee2e6;
+            padding-top: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .detail-value {
+            color: #6c757d;
+        }
+        .total .detail-value {
+            color: #3498db;
+            font-size: 20px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+        .status-badge {
+            background-color: #3498db;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .reward-info {
+            background-color: #e8f4fd;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .timeline {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .timeline-icon {
+            width: 30px;
+            height: 30px;
+            background-color: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+            color: white;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 Stake Confirmed!</h1>
+            <p>Your tokens are now staked and earning rewards</p>
+        </div>
+        
+        <div class="content">
+            <div class="success-message">
+                <h2>Hello {{name}},</h2>
+                <p>Excellent! Your staking request has been processed successfully. Your tokens are now locked in the staking pool and earning rewards.</p>
+                <div class="status-badge">STAKED</div>
+            </div>
+            
+            <div class="stake-details">
+                <div class="detail-row">
+                    <span class="detail-label">Stake Date:</span>
+                    <span class="detail-value">{{stakeDate}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Transaction ID:</span>
+                    <span class="detail-value">{{transactionId}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Staked Amount:</span>
+                    <span class="detail-value">{{tokens}} tokens</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Staking Period:</span>
+                    <span class="detail-value">{{period}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Annual Percentage Yield:</span>
+                    <span class="detail-value">{{apy}}%</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Lock Period:</span>
+                    <span class="detail-value">{{lockPeriod}}</span>
+                </div>
+                <div class="detail-row total">
+                    <span class="detail-label">Total Staked Value:</span>
+                    <span class="detail-value">{{totalValue}}</span>
+                </div>
+            </div>
+            
+            <div class="reward-info">
+                <h3>💰 Reward Information:</h3>
+                <p><strong>Daily Rewards:</strong> Approximately {{dailyRewards}} tokens</p>
+                <p><strong>Monthly Rewards:</strong> Approximately {{monthlyRewards}} tokens</p>
+                <p><strong>Total Rewards ({{period}}):</strong> Approximately {{totalRewards}} tokens</p>
+                <p><strong>Reward Distribution:</strong> Rewards are distributed daily at 00:00 UTC</p>
+            </div>
+            
+            <div class="timeline">
+                <h3>📅 Staking Timeline:</h3>
+                <div class="timeline-item">
+                    <div class="timeline-icon">✓</div>
+                    <div>
+                        <strong>Today:</strong> Tokens locked in staking pool
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">⏰</div>
+                    <div>
+                        <strong>Daily:</strong> Rewards accumulate and are distributed
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-icon">🔓</div>
+                    <div>
+                        <strong>{{unlockDate}}:</strong> Staking period ends, tokens become available
+                    </div>
+                </div>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{dashboardUrl}}" class="cta-button">View My Stakes →</a>
+            </div>
+            
+            <div style="background-color: #e8f5e8; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h4>🚀 What happens next?</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Your tokens are now earning daily rewards</li>
+                    <li>Rewards are automatically added to your staking balance</li>
+                    <li>You can monitor your staking performance in real-time</li>
+                    <li>At the end of the lock period, you can unstake or restake</li>
+                </ul>
+            </div>
+            
+            <div style="background-color: #fff3cd; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h4>💡 Staking Tips:</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Longer staking periods typically offer higher APY</li>
+                    <li>Consider compound staking for maximum returns</li>
+                    <li>Monitor market conditions for optimal staking timing</li>
+                    <li>Diversify your staking across different periods</li>
+                </ul>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; text-align: center;">
+                <strong>Need help?</strong> Contact our support team at support@ditokens.com or visit our staking guide.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2024 DiTokens CRM. All rights reserved.</p>
+            <p style="font-size: 12px; color: #bdc3c7;">
+                This email confirms your staking transaction. Please keep it for your records.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

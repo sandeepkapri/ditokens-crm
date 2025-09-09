@@ -28,11 +28,16 @@ export async function GET(request: NextRequest) {
     // Get token prices for the specified timeframe
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
+    
+    // Set end date to today to prevent future dates
+    const endDate = new Date();
+    endDate.setHours(23, 59, 59, 999); // End of today
 
     const prices = await prisma.tokenPrice.findMany({
       where: {
         date: {
           gte: startDate,
+          lte: endDate, // Only include dates up to today
         },
       },
       orderBy: { date: "asc" }, // Changed to ascending for chart display
