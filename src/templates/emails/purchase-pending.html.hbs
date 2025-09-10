@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Token Purchase Pending - Payment Required</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .alert {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .payment-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .wallet-address {
+            background-color: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+        .amount {
+            font-size: 18px;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .button {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+            color: #6c757d;
+        }
+        .warning {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">DiTokens CRM</div>
+            <h1>Token Purchase Pending</h1>
+        </div>
+
+        <p>Hello {{name}},</p>
+
+        <div class="alert">
+            <strong>⏳ Payment Required:</strong> Your token purchase is pending payment confirmation. Please complete the payment to receive your DIT tokens.
+        </div>
+
+        <h2>Purchase Details</h2>
+        <div class="payment-info">
+            <p><strong>Transaction ID:</strong> {{transactionId}}</p>
+            <p><strong>Amount to Pay:</strong> <span class="amount">${{amount}}</span></p>
+            <p><strong>Tokens to Receive:</strong> <span class="amount">{{tokenAmount}} DIT</span></p>
+            <p><strong>Payment Method:</strong> {{paymentMethod}}</p>
+        </div>
+
+        <h2>Payment Instructions</h2>
+        <div class="payment-info">
+            <p><strong>Step 1:</strong> Send exactly <span class="amount">${{amount}}</span> USDT to the wallet address below:</p>
+            <div class="wallet-address">{{walletAddress}}</div>
+            
+            <p><strong>Step 2:</strong> Wait for 3-6 confirmations on the blockchain</p>
+            <p><strong>Step 3:</strong> Our admin will verify the payment and credit your tokens</p>
+        </div>
+
+        <div class="warning">
+            <strong>⚠️ Important:</strong>
+            <ul>
+                <li>Send the exact amount: <strong>${{amount}}</strong></li>
+                <li>Use the correct network: <strong>{{paymentMethod}}</strong></li>
+                <li>Transaction ID for reference: <strong>{{transactionId}}</strong></li>
+                <li>Do not send from an exchange - use a personal wallet</li>
+            </ul>
+        </div>
+
+        <p>Once payment is confirmed by our admin team, your <strong>{{tokenAmount}} DIT tokens</strong> will be credited to your account and you'll receive a confirmation email.</p>
+
+        <div style="text-align: center;">
+            <a href="{{dashboardUrl}}/dashboard" class="button">View Dashboard</a>
+        </div>
+
+        <div class="footer">
+            <p>If you have any questions, please contact our support team.</p>
+            <p>Best regards,<br>DiTokens Team</p>
+            <p><small>This is an automated message. Please do not reply to this email.</small></p>
+        </div>
+    </div>
+</body>
+</html>

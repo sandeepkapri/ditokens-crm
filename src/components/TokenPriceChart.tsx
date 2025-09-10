@@ -23,33 +23,26 @@ export default function TokenPriceChart() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // For now, we'll use mock data. In production, this would fetch from the API
-    const mockData = generateMockTokenPrices();
-    setTokenPrices(mockData);
-    setIsLoading(false);
+    loadTokenPrices();
   }, []);
 
-  const generateMockTokenPrices = (): TokenPrice[] => {
-    const data: TokenPrice[] = [];
-    const startPrice = 2.8;
-    const today = new Date();
-    
-    for (let i = 30; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      
-      // Generate realistic price variations
-      const variation = (Math.random() - 0.5) * 0.2; // ±10% variation
-      const price = startPrice + variation;
-      
-      data.push({
-        id: `price-${i}`,
-        price: parseFloat(price.toFixed(2)),
-        date: date.toISOString().split('T')[0],
-      });
+  const loadTokenPrices = async () => {
+    try {
+      const response = await fetch('/api/tokens/price');
+      if (response.ok) {
+        const data = await response.json();
+        setTokenPrices(data.prices || []);
+      } else {
+        console.error('Failed to load token prices');
+        // Fallback to empty array if API fails
+        setTokenPrices([]);
+      }
+    } catch (error) {
+      console.error('Error loading token prices:', error);
+      setTokenPrices([]);
+    } finally {
+      setIsLoading(false);
     }
-    
-    return data;
   };
 
   if (isLoading) {

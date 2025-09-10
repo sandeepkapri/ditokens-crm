@@ -226,6 +226,226 @@ export class EmailEventManager {
   }
 
   /**
+   * Handle withdrawal request notification for user
+   */
+  static async handleWithdrawalRequest(
+    userId: string,
+    withdrawalData: {
+      email: string;
+      name: string;
+      amount: string;
+      network: string;
+      walletAddress: string;
+      withdrawalId: string;
+      lockPeriod: string;
+      estimatedUnlockDate: string;
+    }
+  ) {
+    try {
+      const success = await emailService.sendWithdrawalRequest(
+        withdrawalData.email,
+        withdrawalData.name,
+        withdrawalData.amount,
+        withdrawalData.network,
+        withdrawalData.walletAddress,
+        withdrawalData.withdrawalId
+      );
+      
+      if (success) {
+        console.log(`Withdrawal request notification sent to ${withdrawalData.email}`);
+      } else {
+        console.error(`Failed to send withdrawal request notification to ${withdrawalData.email}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error sending withdrawal request notification:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle account activation notification
+   */
+  static async handleAccountActivated(
+    userId: string,
+    userData: { email: string; name: string }
+  ) {
+    try {
+      const success = await emailService.sendAccountActivated(
+        userData.email,
+        userData.name
+      );
+      
+      if (success) {
+        console.log(`Account activation email sent to ${userData.email}`);
+      } else {
+        console.error(`Failed to send account activation email to ${userData.email}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error sending account activation email:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle purchase pending notification
+   */
+  static async handlePurchasePending(
+    userId: string,
+    userData: { email: string; name: string },
+    purchaseData: {
+      amount: number;
+      tokenAmount: number;
+      walletAddress: string;
+      transactionId: string;
+      paymentMethod: string;
+    }
+  ) {
+    try {
+      // Send email to user
+      const userSuccess = await emailService.sendPurchasePending(
+        userData.email,
+        userData.name,
+        purchaseData.amount,
+        purchaseData.tokenAmount,
+        purchaseData.walletAddress,
+        purchaseData.transactionId,
+        purchaseData.paymentMethod
+      );
+      
+      if (userSuccess) {
+        console.log(`Purchase pending email sent to ${userData.email}`);
+      } else {
+        console.error(`Failed to send purchase pending email to ${userData.email}`);
+      }
+
+      // Send email to admins
+      const adminSuccess = await this.handlePurchasePendingAdmin({
+        userId,
+        userEmail: userData.email,
+        userName: userData.name,
+        amount: purchaseData.amount.toString(),
+        tokenAmount: purchaseData.tokenAmount.toString(),
+        walletAddress: purchaseData.walletAddress,
+        transactionId: purchaseData.transactionId,
+        paymentMethod: purchaseData.paymentMethod
+      });
+      
+      return userSuccess && adminSuccess;
+    } catch (error) {
+      console.error('Error sending purchase pending email:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle purchase pending notification for admin
+   */
+  static async handlePurchasePendingAdmin(
+    purchaseData: {
+      userId: string;
+      userEmail: string;
+      userName: string;
+      amount: string;
+      tokenAmount: string;
+      walletAddress: string;
+      transactionId: string;
+      paymentMethod: string;
+    }
+  ) {
+    try {
+      // Get admin emails from environment
+      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || [];
+      
+      if (adminEmails.length === 0) {
+        console.warn('No admin emails configured for purchase notifications');
+        return false;
+      }
+
+      const results = await Promise.allSettled(
+        adminEmails.map(adminEmail => 
+          emailService.sendPurchasePendingAdmin(
+            adminEmail,
+            purchaseData.userEmail,
+            purchaseData.userName,
+            purchaseData.amount,
+            purchaseData.tokenAmount,
+            purchaseData.walletAddress,
+            purchaseData.transactionId,
+            purchaseData.paymentMethod
+          )
+        )
+      );
+
+      const successful = results.filter(result => result.status === 'fulfilled').length;
+      const failed = results.filter(result => result.status === 'rejected').length;
+
+      console.log(`Purchase pending admin emails: ${successful} sent, ${failed} failed`);
+      
+      return { successful, failed, total: results.length };
+    } catch (error) {
+      console.error('Error sending bulk purchase pending admin notifications:', error);
+      return { successful: 0, failed: 0, total: 0 };
+    }
+  }
+
+  /**
+   * Handle withdrawal request notification for admin
+   */
+  static async handleWithdrawalRequestAdmin(
+    withdrawalData: {
+      userId: string;
+      userEmail: string;
+      userName: string;
+      amount: string;
+      network: string;
+      walletAddress: string;
+      withdrawalId: string;
+      lockPeriod: string;
+      estimatedUnlockDate: string;
+      userBalance: string;
+    }
+  ) {
+    try {
+      // Get admin emails from environment
+      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || [];
+      
+      if (adminEmails.length === 0) {
+        console.warn('No admin emails configured for withdrawal notifications');
+        return false;
+      }
+
+      const results = await Promise.allSettled(
+        adminEmails.map(adminEmail => 
+          emailService.sendWithdrawalRequestAdmin(
+            adminEmail,
+            withdrawalData.userEmail,
+            withdrawalData.userName,
+            withdrawalData.amount,
+            withdrawalData.network,
+            withdrawalData.walletAddress,
+            withdrawalData.withdrawalId,
+            withdrawalData.userBalance
+          )
+        )
+      );
+
+      const successful = results.filter(result => result.status === 'fulfilled' && result.value).length;
+      const failed = results.length - successful;
+
+      console.log(`Admin withdrawal notifications sent: ${successful} successful, ${failed} failed`);
+      
+      return { successful, failed, total: results.length };
+    } catch (error) {
+      console.error('Error sending admin withdrawal notifications:', error);
+      return { successful: 0, failed: 0, total: 0 };
+    }
+  }
+
+  /**
    * Handle general notification event
    */
   static async handleNotification(
@@ -354,6 +574,11 @@ export const sendPaymentConfirmation = EmailEventManager.handlePaymentConfirmati
 export const sendPurchaseConfirmation = EmailEventManager.handlePurchaseConfirmation;
 export const sendStakeConfirmation = EmailEventManager.handleStakeConfirmation;
 export const sendPasswordReset = EmailEventManager.handlePasswordReset;
+export const sendWithdrawalRequest = EmailEventManager.handleWithdrawalRequest;
+export const sendWithdrawalRequestAdmin = EmailEventManager.handleWithdrawalRequestAdmin;
+export const sendAccountActivated = EmailEventManager.handleAccountActivated;
+export const sendPurchasePending = EmailEventManager.handlePurchasePending;
+export const sendPurchasePendingAdmin = EmailEventManager.handlePurchasePendingAdmin;
 export const sendNotification = EmailEventManager.handleNotification;
 export const sendBulkNotifications = EmailEventManager.sendBulkNotifications;
 export const testEmailService = EmailEventManager.testEmailService;

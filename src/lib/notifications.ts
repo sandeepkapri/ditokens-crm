@@ -54,6 +54,28 @@ export const NotificationHelpers = {
     });
   },
 
+  async onTokenPurchasePending(userId: string, tokenAmount: number, usdAmount: number, transactionId: string) {
+    return createNotification({
+      userId,
+      type: "TOKEN_PURCHASE",
+      title: "Token Purchase Pending",
+      message: `Your purchase of ${tokenAmount} DIT tokens for $${usdAmount.toFixed(2)} is pending payment confirmation. Transaction ID: ${transactionId}`,
+      icon: "⏳",
+      data: { tokenAmount, usdAmount, transactionId, type: "purchase_pending" },
+    });
+  },
+
+  async onTokenPurchaseRejected(userId: string, tokenAmount: number, usdAmount: number, reason: string) {
+    return createNotification({
+      userId,
+      type: "TOKEN_PURCHASE",
+      title: "Token Purchase Rejected",
+      message: `Your purchase of ${tokenAmount} DIT tokens for $${usdAmount.toFixed(2)} was rejected. Reason: ${reason}`,
+      icon: "❌",
+      data: { tokenAmount, usdAmount, reason, type: "purchase_rejected" },
+    });
+  },
+
   async onReferralCommission(userId: string, commissionAmount: number, referredUserName: string) {
     return createNotification({
       userId,

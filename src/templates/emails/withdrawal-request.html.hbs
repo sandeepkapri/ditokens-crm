@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdrawal Request Submitted</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+        .title {
+            color: #1f2937;
+            font-size: 24px;
+            margin: 0;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .info-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+        .label {
+            font-weight: 600;
+            color: #4b5563;
+        }
+        .value {
+            color: #1f2937;
+            font-family: 'Courier New', monospace;
+        }
+        .warning-box {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .warning-title {
+            color: #92400e;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .warning-text {
+            color: #92400e;
+            font-size: 14px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .cta-button:hover {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">DiTokens CRM</div>
+            <h1 class="title">Withdrawal Request Submitted</h1>
+        </div>
+
+        <div class="content">
+            <p>Hello <strong>{{name}}</strong>,</p>
+            
+            <p>Your withdrawal request has been successfully submitted and is now under review. Here are the details of your request:</p>
+
+            <div class="info-box">
+                <div class="info-row">
+                    <span class="label">Withdrawal ID:</span>
+                    <span class="value">{{withdrawalId}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Amount:</span>
+                    <span class="value">{{amount}} DIT Tokens</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Network:</span>
+                    <span class="value">{{network}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Wallet Address:</span>
+                    <span class="value">{{walletAddress}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Lock Period:</span>
+                    <span class="value">{{lockPeriod}}</span>
+                </div>
+                <div class="info-row">
+                    <span class="label">Estimated Unlock Date:</span>
+                    <span class="value">{{estimatedUnlockDate}}</span>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <div class="warning-title">⚠️ Important Notice</div>
+                <div class="warning-text">
+                    <p><strong>3-Year Lock Period:</strong> Your tokens will be locked for 3 years from the date of approval. During this period, you cannot withdraw or transfer these tokens.</p>
+                    <p><strong>Processing Time:</strong> Withdrawal requests are typically processed within 24-48 hours during business days.</p>
+                    <p><strong>Status Updates:</strong> You will receive email notifications when your request status changes.</p>
+                </div>
+            </div>
+
+            <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+
+            <div style="text-align: center;">
+                <a href="{{dashboardUrl}}/wallets/withdrawal" class="cta-button">View Withdrawal Status</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>© 2024 DiTokens CRM. All rights reserved.</p>
+            <p>For support, contact us at <a href="mailto:support@ditokens.com">support@ditokens.com</a></p>
+        </div>
+    </div>
+</body>
+</html>

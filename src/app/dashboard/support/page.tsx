@@ -38,7 +38,7 @@ export default function SupportPage() {
       </div>
 
       {/* Support Information */}
-      <div className="mb-8 rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+      <div className="mb-8 rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
         <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
           🎯 How Can We Help You?
         </h3>
@@ -85,7 +85,7 @@ export default function SupportPage() {
       </div>
 
       {/* Chat Widget Container */}
-      <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+      <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
         <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
           💬 Live Chat Support
         </h3>

@@ -27,6 +27,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Check if user is active
+    if (!user.isActive) {
+      return NextResponse.json({ error: "Account is not active" }, { status: 403 });
+    }
+
     // Check if user has enough available tokens
     if (user.availableTokens < amount) {
       return NextResponse.json(

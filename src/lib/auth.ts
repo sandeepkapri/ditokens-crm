@@ -2,6 +2,7 @@ import { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { prisma } from "./prisma";
 import bcrypt from "bcryptjs";
+import { sendLoginNotification } from "./email-events";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -33,6 +34,42 @@ export const authOptions: NextAuthOptions = {
 
         if (!isPasswordValid) {
           return null;
+        }
+
+        // Send login notification email
+        console.log(`🔔 Attempting to send login notification to ${user.email}`);
+        try {
+          const emailResult = await sendLoginNotification(user.id, {
+            email: user.email,
+            name: user.name
+          }, {
+            ipAddress: 'unknown', // NextAuth doesn't provide IP in authorize
+            userAgent: 'unknown',
+            timestamp: new Date()
+          });
+          console.log(`✅ Login notification sent to ${user.email}, result: ${emailResult}`);
+        } catch (emailError) {
+          console.error('❌ Failed to send login notification:', emailError);
+          // Don't fail the login if email fails
+        }
+
+        // Track login in database
+        try {
+          await prisma.loginHistory.create({
+            data: {
+              userId: user.id,
+              ipAddress: 'unknown', // NextAuth doesn't provide IP in authorize
+              userAgent: 'unknown',
+              status: 'SUCCESS',
+              location: 'Unknown',
+              deviceType: 'Unknown',
+              browser: 'Unknown'
+            }
+          });
+          console.log(`📊 Login tracked for user ${user.email}`);
+        } catch (trackingError) {
+          console.error('❌ Failed to track login:', trackingError);
+          // Don't fail the login if tracking fails
         }
 
         return {

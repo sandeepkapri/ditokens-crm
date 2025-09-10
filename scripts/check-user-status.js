@@ -80,6 +80,18 @@ async function activateUser(email) {
     console.log(`   - Email: ${user.email}`);
     console.log(`   - Active: ${user.isActive ? '✅ Yes' : '❌ No'}`);
 
+    // Send activation email
+    try {
+      const { sendAccountActivated } = require('../src/lib/email-events');
+      await sendAccountActivated(user.id, {
+        email: user.email,
+        name: user.name
+      });
+      console.log('📧 Account activation email sent successfully!');
+    } catch (emailError) {
+      console.error('❌ Failed to send activation email:', emailError.message);
+    }
+
     return user;
   } catch (error) {
     console.error('❌ Error activating user:', error.message);

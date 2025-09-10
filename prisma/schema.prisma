@@ -24,6 +24,7 @@ model User {
   referralCode      String    @unique
   referredBy        String?   // Referral code of the user who referred this user
   walletAddress     String?   // For deposit/withdrawal
+  usdtWalletAddress String?   // USDT ERC-20 wallet address for payments
   totalTokens       Float     @default(0)
   stakedTokens      Float     @default(0)
   availableTokens   Float     @default(0)
@@ -46,6 +47,8 @@ model User {
   referredUserCommissions ReferralCommission[] @relation("ReferredUserCommissions")
   notifications    Notification[]
   withdrawalRequests WithdrawalRequest[]
+  withdrawalWallets WithdrawalWallet[]
+  loginHistory     LoginHistory[]
 
   @@map("users")
 }
@@ -251,6 +254,41 @@ model UserSettings {
   @@map("user_settings")
 }
 
+model WithdrawalWallet {
+  id        String   @id @default(cuid())
+  userId    String
+  address   String
+  network   String   // ethereum, usdt-erc20, usdt-trc20, usdt-bep20, usdt-polygon, bitcoin, polygon, bsc
+  label     String
+  isActive  Boolean  @default(true)
+  isVerified Boolean @default(false)
+  lastUsed  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("withdrawal_wallets")
+}
+
+model LoginHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  ipAddress String
+  userAgent String
+  status    LoginStatus @default(SUCCESS)
+  location  String?
+  deviceType String?
+  browser   String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("login_history")
+}
+
 enum UserRole {
   USER
   ADMIN
@@ -295,6 +333,12 @@ enum ProfileUpdateType {
   PASSWORD_RESET
   EMAIL_UPDATE
   SETTINGS_UPDATE
+}
+
+enum LoginStatus {
+  SUCCESS
+  FAILED
+  BLOCKED
 }
 
 model Notification {

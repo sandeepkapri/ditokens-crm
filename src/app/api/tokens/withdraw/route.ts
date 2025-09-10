@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { sendWithdrawalRequest, sendWithdrawalRequestAdmin } from "@/lib/email-events";
 
 const withdrawSchema = z.object({
   amount: z.number().positive(),
@@ -37,7 +38,9 @@ export async function POST(request: NextRequest) {
 
     // Check if user is active
     if (!user.isActive) {
-      return NextResponse.json({ error: "Account is not active" }, { status: 403 });
+      return NextResponse.json({ 
+        error: "Account is not active. Please contact support to activate your account." 
+      }, { status: 403 });
     }
 
     // Check if user has sufficient balance
@@ -98,6 +101,45 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Send notifications
+    const estimatedUnlockDate = new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString();
+    
+    // Send notification to user
+    try {
+      await sendWithdrawalRequest(user.id, {
+        email: user.email,
+        name: user.name,
+        amount: amount.toString(),
+        network,
+        walletAddress,
+        withdrawalId: withdrawalRequest.id,
+        lockPeriod: "3 years",
+        estimatedUnlockDate: new Date(estimatedUnlockDate).toLocaleDateString(),
+      });
+    } catch (emailError) {
+      console.error('Failed to send user withdrawal notification:', emailError);
+      // Don't fail the withdrawal if email fails
+    }
+
+    // Send notification to admin
+    try {
+      await sendWithdrawalRequestAdmin({
+        userId: user.id,
+        userEmail: user.email,
+        userName: user.name,
+        amount: amount.toString(),
+        network,
+        walletAddress,
+        withdrawalId: withdrawalRequest.id,
+        lockPeriod: "3 years",
+        estimatedUnlockDate: new Date(estimatedUnlockDate).toLocaleDateString(),
+        userBalance: user.availableTokens.toString(),
+      });
+    } catch (emailError) {
+      console.error('Failed to send admin withdrawal notification:', emailError);
+      // Don't fail the withdrawal if email fails
+    }
+
     return NextResponse.json({
       message: "Withdrawal request submitted successfully",
       withdrawalId: withdrawalRequest.id,
@@ -106,7 +148,7 @@ export async function POST(request: NextRequest) {
       network,
       walletAddress,
       lockPeriod: "3 years",
-      estimatedUnlockDate: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString(),
+      estimatedUnlockDate,
     }, { status: 200 });
   } catch (error) {
     console.error("Error processing withdrawal request:", error);

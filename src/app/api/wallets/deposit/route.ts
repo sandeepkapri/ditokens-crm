@@ -24,50 +24,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // For demo purposes, return mock data
-    // In production, you would fetch from actual wallet tables
-    const mockWallets = [
-      {
-        id: "1",
-        address: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
-        network: "usdt",
-        label: "USDT Trading Wallet",
-        isActive: true,
-        balance: 0.0,
-        lastDeposit: null,
-      },
-      {
-        id: "2",
-        address: "0x9876543210fedcba9876543210fedcba98765432",
-        network: "ethereum",
-        label: "ETH Trading Wallet",
-        isActive: true,
-        balance: 0.0,
-        lastDeposit: null,
-      },
-      {
-        id: "3",
-        address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-        network: "bitcoin",
-        label: "BTC Savings",
-        isActive: true,
-        balance: 0.0,
-        lastDeposit: null,
-      },
-    ];
+    // Check if user is active first
+    if (!user.isActive) {
+      return NextResponse.json({ 
+        wallets: [], 
+        transactions: [],
+        message: "Account is not active. Please contact support to activate your account."
+      });
+    }
 
-    const mockTransactions = [
-      {
-        id: "1",
-        txHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-        amount: 0.5,
-        network: "ethereum",
-        status: "CONFIRMED",
-        confirmations: 12,
-        requiredConfirmations: 12,
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
+    // Return empty data for now - no mock data
+    const mockWallets: any[] = [];
+    const mockTransactions: any[] = [];
 
     return NextResponse.json({
       wallets: mockWallets,

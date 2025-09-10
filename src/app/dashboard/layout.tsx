@@ -1,6 +1,8 @@
 import { Header } from "@/components/Layouts/header";
 import { Sidebar } from "@/components/Layouts/sidebar";
 import { SidebarProvider } from "@/components/Layouts/sidebar/sidebar-context";
+import AccountStatusAlert from "@/components/AccountStatusAlert";
+import LoginTracker from "@/components/LoginTracker";
 
 export default function DashboardLayout({
   children,
@@ -14,6 +16,8 @@ export default function DashboardLayout({
         <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
           <Header />
           <main className="flex-1 p-6">
+            <LoginTracker />
+            <AccountStatusAlert />
             {children}
           </main>
         </div>

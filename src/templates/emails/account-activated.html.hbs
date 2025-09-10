@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Activated - DiTokens CRM</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #10b981;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+        .title {
+            color: #1f2937;
+            font-size: 24px;
+            margin: 0;
+        }
+        .success-badge {
+            background-color: #10b981;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        .content {
+            margin-bottom: 30px;
+        }
+        .welcome-box {
+            background-color: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .welcome-title {
+            color: #166534;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .welcome-text {
+            color: #166534;
+            font-size: 14px;
+        }
+        .features-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .features-title {
+            color: #1f2937;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            color: #4b5563;
+        }
+        .feature-icon {
+            color: #10b981;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #10b981;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 20px 0;
+        }
+        .cta-button:hover {
+            background-color: #059669;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">DiTokens CRM</div>
+            <h1 class="title">Account Activated! 🎉</h1>
+            <div class="success-badge">WELCOME TO DITOKENS</div>
+        </div>
+
+        <div class="content">
+            <p>Hello <strong>{{name}}</strong>,</p>
+            
+            <p>Great news! Your DiTokens account has been successfully activated by our admin team. You can now access all features and start your token journey with us.</p>
+
+            <div class="welcome-box">
+                <div class="welcome-title">🎉 Welcome to DiTokens!</div>
+                <div class="welcome-text">
+                    Your account is now fully active and ready to use. You can log in, purchase tokens, stake your holdings, and participate in all platform activities.
+                </div>
+            </div>
+
+            <div class="features-box">
+                <div class="features-title">🚀 What You Can Do Now:</div>
+                <ul class="feature-list">
+                    <li class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>Purchase DIT tokens with USDT</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>Stake your tokens for rewards</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>Manage your withdrawal wallets</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>Track your portfolio performance</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>Earn referral commissions</span>
+                    </li>
+                    <li class="feature-item">
+                        <span class="feature-icon">✓</span>
+                        <span>Access all dashboard features</span>
+                    </li>
+                </ul>
+            </div>
+
+            <p><strong>Next Steps:</strong></p>
+            <ul>
+                <li>Log into your account using your email and password</li>
+                <li>Complete your profile setup</li>
+                <li>Add a withdrawal wallet for future transactions</li>
+                <li>Start exploring the platform features</li>
+            </ul>
+
+            <div style="text-align: center;">
+                <a href="{{dashboardUrl}}/dashboard" class="cta-button">Access Your Dashboard</a>
+            </div>
+
+            <p><strong>Important Notes:</strong></p>
+            <ul>
+                <li>Keep your login credentials secure</li>
+                <li>Always verify wallet addresses before transactions</li>
+                <li>Contact support if you have any questions</li>
+                <li>Check your email regularly for important updates</li>
+            </ul>
+
+            <p>If you have any questions or need assistance, our support team is here to help you get started.</p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated message. Please do not reply to this email.</p>
+            <p>© 2024 DiTokens CRM. All rights reserved.</p>
+            <p>For support, contact us at <a href="mailto:support@ditokens.com">support@ditokens.com</a></p>
+        </div>
+    </div>
+</body>
+</html>

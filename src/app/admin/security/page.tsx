@@ -60,59 +60,18 @@ export default function AdminSecurity() {
 
   const loadSecurityData = async () => {
     try {
-      // Mock data for demonstration
-      const mockLoginHistory: LoginHistory[] = [
-        {
-          id: "1",
-          timestamp: "2025-08-23T18:30:00Z",
-          ipAddress: "192.168.1.100",
-          location: "New York, US",
-          device: "MacBook Pro",
-          browser: "Chrome 120.0",
-          status: "SUCCESS"
-        },
-        {
-          id: "2",
-          timestamp: "2025-08-22T14:15:00Z",
-          ipAddress: "192.168.1.100",
-          location: "New York, US",
-          device: "MacBook Pro",
-          browser: "Chrome 120.0",
-          status: "SUCCESS"
-        },
-        {
-          id: "3",
-          timestamp: "2025-08-21T09:45:00Z",
-          ipAddress: "203.45.67.89",
-          location: "London, UK",
-          device: "Unknown",
-          browser: "Firefox 119.0",
-          status: "BLOCKED"
-        },
-        {
-          id: "4",
-          timestamp: "2025-08-20T16:20:00Z",
-          ipAddress: "192.168.1.100",
-          location: "New York, US",
-          device: "MacBook Pro",
-          browser: "Chrome 120.0",
-          status: "SUCCESS"
-        },
-        {
-          id: "5",
-          timestamp: "2025-08-19T11:30:00Z",
-          ipAddress: "192.168.1.100",
-          location: "New York, US",
-          device: "MacBook Pro",
-          browser: "Chrome 120.0",
-          status: "SUCCESS"
-        }
-      ];
-
-      setLoginHistory(mockLoginHistory);
-      setIsLoading(false);
+      const response = await fetch('/api/admin/security/login-history');
+      if (response.ok) {
+        const data = await response.json();
+        setLoginHistory(data.history || []);
+      } else {
+        console.error('Failed to load security data');
+        setLoginHistory([]);
+      }
     } catch (error) {
       console.error("Error loading security data:", error);
+      setLoginHistory([]);
+    } finally {
       setIsLoading(false);
     }
   };

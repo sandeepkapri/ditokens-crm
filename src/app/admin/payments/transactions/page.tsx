@@ -39,85 +39,17 @@ export default function TransactionHistory() {
 
   const loadTransactions = async () => {
     try {
-      // Mock data for demonstration
-      const mockTransactions: Transaction[] = [
-        {
-          id: "txn_001",
-          userId: "user_001",
-          userEmail: "john.doe@example.com",
-          type: "TOKEN_PURCHASE",
-          amount: 250.00,
-          status: "COMPLETED",
-          description: "Token purchase - 1000 DIT",
-          createdAt: "2025-08-23T20:02:40Z",
-          paymentMethod: "USDT",
-          reference: "REF_20250823_001",
-        },
-        {
-          id: "txn_002",
-          userId: "user_002",
-          userEmail: "jane.smith@example.com",
-          type: "WITHDRAWAL",
-          amount: 100.00,
-          status: "PENDING",
-          description: "USDT withdrawal request",
-          createdAt: "2025-08-23T22:02:40Z",
-          paymentMethod: "USDT",
-          reference: "REF_20250823_002",
-        },
-        {
-          id: "txn_003",
-          userId: "user_003",
-          userEmail: "mike.johnson@example.com",
-          type: "TOKEN_PURCHASE",
-          amount: 500.00,
-          status: "COMPLETED",
-          description: "Token purchase - 2000 DIT",
-          createdAt: "2025-08-22T15:30:20Z",
-          paymentMethod: "USDT",
-          reference: "REF_20250822_001",
-        },
-        {
-          id: "txn_004",
-          userId: "user_004",
-          userEmail: "sarah.wilson@example.com",
-          type: "REFERRAL_COMMISSION",
-          amount: 25.00,
-          status: "COMPLETED",
-          description: "Referral commission payment",
-          createdAt: "2025-08-21T10:15:30Z",
-          paymentMethod: "TOKENS",
-          reference: "REF_20250821_001",
-        },
-        {
-          id: "txn_005",
-          userId: "user_005",
-          userEmail: "david.brown@example.com",
-          type: "STAKING_REWARD",
-          amount: 75.50,
-          status: "COMPLETED",
-          description: "Staking rewards distribution",
-          createdAt: "2025-08-20T08:45:15Z",
-          paymentMethod: "TOKENS",
-          reference: "REF_20250820_001",
-        },
-        {
-          id: "txn_006",
-          userId: "user_006",
-          userEmail: "emma.davis@example.com",
-          type: "TOKEN_PURCHASE",
-          amount: 150.00,
-          status: "FAILED",
-          description: "Token purchase - 600 DIT",
-          createdAt: "2025-08-19T14:20:10Z",
-          paymentMethod: "USDT",
-          reference: "REF_20250819_001",
-        },
-      ];
-
-      setTransactions(mockTransactions);
+      const response = await fetch('/api/admin/transactions');
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data.transactions || []);
+      } else {
+        console.error('Failed to load transactions');
+        setTransactions([]);
+      }
     } catch (error) {
       console.error("Error loading transactions:", error);
+      setTransactions([]);
     } finally {
       setIsLoading(false);
     }

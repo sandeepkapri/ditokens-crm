@@ -281,10 +281,12 @@ export default function ProfilePage() {
                       type="email"
                       name="email"
                       value={formData.email}
-                      onChange={handleInputChange}
-                      disabled={!isEditing}
+                      disabled={true}
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none disabled:bg-gray-100 disabled:cursor-not-allowed dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:disabled:bg-gray-800"
                     />
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                      Email address cannot be changed for security reasons
+                    </p>
                   </div>
 
                   <div>

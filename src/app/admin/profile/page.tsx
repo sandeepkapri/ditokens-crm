@@ -215,6 +215,9 @@ export default function AdminProfile() {
                         className="w-full px-3 py-2 border border-stroke rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:border-stroke-dark dark:bg-box-dark dark:text-white"
                         disabled
                       />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Email address cannot be changed for security reasons
+                      </p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-black dark:text-white mb-2">

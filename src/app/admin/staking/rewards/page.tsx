@@ -41,83 +41,17 @@ export default function RewardsManagement() {
 
   const loadRewards = async () => {
     try {
-      // Mock data for demonstration
-      const mockRewards: StakingReward[] = [
-        {
-          id: "reward_001",
-          userId: "user_001",
-          userEmail: "john.doe@example.com",
-          stakingAmount: 1000,
-          apy: 12.5,
-          rewards: 125.00,
-          stakingPeriod: 3,
-          startDate: "2025-01-15T00:00:00Z",
-          endDate: "2028-01-15T00:00:00Z",
-          status: "ACTIVE",
-          lastRewardDate: "2025-08-15T00:00:00Z",
-          totalRewardsEarned: 125.00,
-        },
-        {
-          id: "reward_002",
-          userId: "user_002",
-          userEmail: "jane.smith@example.com",
-          stakingAmount: 2500,
-          apy: 12.5,
-          rewards: 312.50,
-          stakingPeriod: 3,
-          startDate: "2025-02-20T00:00:00Z",
-          endDate: "2028-02-20T00:00:00Z",
-          status: "ACTIVE",
-          lastRewardDate: "2025-08-20T00:00:00Z",
-          totalRewardsEarned: 312.50,
-        },
-        {
-          id: "reward_003",
-          userId: "user_003",
-          userEmail: "mike.johnson@example.com",
-          stakingAmount: 500,
-          apy: 12.5,
-          rewards: 62.50,
-          stakingPeriod: 3,
-          startDate: "2025-03-10T00:00:00Z",
-          endDate: "2028-03-10T00:00:00Z",
-          status: "COMPLETED",
-          lastRewardDate: "2025-08-10T00:00:00Z",
-          totalRewardsEarned: 62.50,
-        },
-        {
-          id: "reward_004",
-          userId: "user_004",
-          userEmail: "sarah.wilson@example.com",
-          stakingAmount: 1500,
-          apy: 12.5,
-          rewards: 187.50,
-          stakingPeriod: 3,
-          startDate: "2025-04-05T00:00:00Z",
-          endDate: "2028-04-05T00:00:00Z",
-          status: "ACTIVE",
-          lastRewardDate: "2025-08-05T00:00:00Z",
-          totalRewardsEarned: 187.50,
-        },
-        {
-          id: "reward_005",
-          userId: "user_005",
-          userEmail: "david.brown@example.com",
-          stakingAmount: 3000,
-          apy: 12.5,
-          rewards: 375.00,
-          stakingPeriod: 3,
-          startDate: "2025-05-12T00:00:00Z",
-          endDate: "2028-05-12T00:00:00Z",
-          status: "ACTIVE",
-          lastRewardDate: "2025-08-12T00:00:00Z",
-          totalRewardsEarned: 375.00,
-        },
-      ];
-
-      setRewards(mockRewards);
+      const response = await fetch('/api/admin/staking/rewards');
+      if (response.ok) {
+        const data = await response.json();
+        setRewards(data.rewards || []);
+      } else {
+        console.error('Failed to load staking rewards');
+        setRewards([]);
+      }
     } catch (error) {
       console.error("Error loading rewards:", error);
+      setRewards([]);
     } finally {
       setIsLoading(false);
     }

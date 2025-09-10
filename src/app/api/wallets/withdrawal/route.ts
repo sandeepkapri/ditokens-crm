@@ -25,83 +25,47 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // For demo purposes, return mock data
-    // In production, you would fetch from actual wallet tables
-    const mockWallets = [
-      {
-        id: "1",
-        address: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
-        network: "usdt",
-        label: "USDT Trading Wallet",
-        isActive: true,
-        isVerified: true,
-        lastUsed: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "2",
-        address: "0x9876543210fedcba9876543210fedcba98765432",
-        network: "ethereum",
-        label: "ETH Hardware Wallet",
-        isActive: true,
-        isVerified: true,
-        lastUsed: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "3",
-        address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-        network: "bitcoin",
-        label: "BTC Cold Storage",
-        isActive: true,
-        isVerified: true,
-        lastUsed: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "4",
-        address: "0xabcdef1234567890abcdef1234567890abcdef12",
-        network: "polygon",
-        label: "MATIC DeFi Wallet",
-        isActive: true,
-        isVerified: false,
-        lastUsed: null,
-      },
-    ];
+    // Check if user is active first
+    if (!user.isActive) {
+      return NextResponse.json({ 
+        wallets: [], 
+        requests: [],
+        message: "Account is not active. Please contact support to activate your account."
+      });
+    }
 
-    const mockRequests = [
-      {
-        id: "1",
-        amount: 100.0,
-        network: "usdt",
-        address: "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
-        status: "COMPLETED",
-        txHash: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
-        fee: 1.0,
-        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "2",
-        amount: 0.1,
-        network: "ethereum",
-        address: "0x9876543210fedcba9876543210fedcba98765432",
-        status: "COMPLETED",
-        txHash: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
-        fee: 0.005,
-        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-      {
-        id: "3",
-        amount: 0.05,
-        network: "bitcoin",
-        address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
-        status: "PROCESSING",
-        txHash: undefined,
-        fee: 0.0001,
-        timestamp: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
-      },
-    ];
+    // Fetch real wallets from database
+    const wallets = await prisma.withdrawalWallet.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    // Fetch withdrawal requests
+    const withdrawalRequests = await prisma.withdrawalRequest.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' }
+    });
 
     return NextResponse.json({
-      wallets: mockWallets,
-      requests: mockRequests,
+      wallets: wallets.map(wallet => ({
+        id: wallet.id,
+        address: wallet.address,
+        network: wallet.network,
+        label: wallet.label,
+        isActive: wallet.isActive,
+        isVerified: wallet.isVerified,
+        lastUsed: wallet.lastUsed?.toISOString() || null,
+      })),
+      requests: withdrawalRequests.map(request => ({
+        id: request.id,
+        amount: request.amount,
+        network: request.network,
+        address: request.walletAddress,
+        status: request.status,
+        txHash: request.txHash,
+        fee: request.fee,
+        timestamp: request.createdAt.toISOString(),
+      })),
     });
   } catch (error) {
     console.error("Error fetching withdrawal wallets:", error);
@@ -147,31 +111,29 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newWallet = {
-      id: Math.random().toString(36).substr(2, 9),
-      address,
-      network,
-      label,
-      isActive: true,
-      isVerified: false, // New wallets need verification
-      lastUsed: null,
-    };
-
-    // In production, you would save this to a database
-    // await prisma.withdrawalWallet.create({
-    //   data: {
-    //     userId: user.id,
-    //     address: newWallet.address,
-    //     network: newWallet.network,
-    //     label: newWallet.label,
-    //     isActive: true,
-    //     isVerified: false,
-    //   },
-    // });
+    // Save wallet to database
+    const savedWallet = await prisma.withdrawalWallet.create({
+      data: {
+        userId: user.id,
+        address,
+        network,
+        label,
+        isActive: true,
+        isVerified: true, // Auto-verify new wallets for simplicity
+      },
+    });
 
     return NextResponse.json({
       message: "Withdrawal wallet added successfully",
-      wallet: newWallet,
+      wallet: {
+        id: savedWallet.id,
+        address: savedWallet.address,
+        network: savedWallet.network,
+        label: savedWallet.label,
+        isActive: savedWallet.isActive,
+        isVerified: savedWallet.isVerified,
+        lastUsed: savedWallet.lastUsed?.toISOString() || null,
+      },
     });
   } catch (error) {
     console.error("Error adding withdrawal wallet:", error);
@@ -183,6 +145,55 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.json(
       { error: "Failed to add withdrawal wallet" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const walletId = searchParams.get('id');
+
+    if (!walletId) {
+      return NextResponse.json({ error: "Wallet ID is required" }, { status: 400 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Check if wallet belongs to user
+    const wallet = await prisma.withdrawalWallet.findFirst({
+      where: { id: walletId, userId: user.id },
+    });
+
+    if (!wallet) {
+      return NextResponse.json({ error: "Wallet not found" }, { status: 404 });
+    }
+
+    // Delete the wallet
+    await prisma.withdrawalWallet.delete({
+      where: { id: walletId },
+    });
+
+    return NextResponse.json({
+      message: "Withdrawal wallet deleted successfully",
+    });
+
+  } catch (error) {
+    console.error("Error deleting withdrawal wallet:", error);
+    return NextResponse.json(
+      { error: "Failed to delete withdrawal wallet" },
       { status: 500 }
     );
   }

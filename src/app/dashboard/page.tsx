@@ -157,7 +157,7 @@ export default function Dashboard() {
 
       {/* Token Balance Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <div className="text-center">
             <h3 className="text-lg font-semibold text-black dark:text-white mb-2">
               Total Tokens
@@ -174,7 +174,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <div className="text-center">
             <h3 className="text-lg font-semibold text-black dark:text-white mb-2">
               Available Tokens
@@ -191,7 +191,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <div className="text-center">
             <h3 className="text-lg font-semibold text-black dark:text-white mb-2">
               Staked Tokens
@@ -208,7 +208,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <div className="text-center">
             <h3 className="text-lg font-semibold text-black dark:text-white mb-2">
               Total Earnings
@@ -227,7 +227,7 @@ export default function Dashboard() {
       </div>
 
       {/* Token Supply Status */}
-      <div className="mb-8 rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+      <div className="mb-8 rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
         <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
           🪙 Token Supply Status (50M Total Limit)
         </h3>
@@ -264,7 +264,7 @@ export default function Dashboard() {
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Token Price Trend Chart */}
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Token Price Trend
           </h3>
@@ -314,7 +314,7 @@ export default function Dashboard() {
         </div>
 
         {/* Portfolio Distribution Chart */}
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Portfolio Distribution
           </h3>
@@ -359,7 +359,7 @@ export default function Dashboard() {
 
       {/* Withdrawal Status */}
       {withdrawalRequests.length > 0 && (
-        <div className="mb-8 rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="mb-8 rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Withdrawal Requests
           </h3>
@@ -458,7 +458,7 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Quick Actions
           </h3>
@@ -489,7 +489,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Account Summary
           </h3>
@@ -521,7 +521,7 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-2.5 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5 xl:pb-1">
+        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Important Notes
           </h3>

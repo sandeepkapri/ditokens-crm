@@ -33,6 +33,18 @@ export const getAdminNavData = (isSuperAdmin: boolean) => [
             title: "Transaction History",
             url: "/admin/payments/transactions",
           },
+          {
+            title: "Pending Payments",
+            url: "/admin/payments/pending",
+          },
+          {
+            title: "Payment Tracking",
+            url: "/admin/payments/tracking",
+          },
+          {
+            title: "Wallet Management",
+            url: "/admin/wallets/manage",
+          },
         ],
       },
       {

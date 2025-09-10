@@ -111,7 +111,12 @@ export class EmailService {
         'purchase-confirmation',
         'stake-confirmation',
         'password-reset',
-        'notification'
+        'notification',
+        'account-activated',
+        'withdrawal-request',
+        'withdrawal-request-admin',
+        'purchase-pending',
+        'purchase-pending-admin'
       ];
 
       templateFiles.forEach(templateName => {
@@ -325,6 +330,128 @@ export class EmailService {
       subject: title,
       template: 'notification',
       context: { name, title, message }
+    });
+  }
+
+  async sendWithdrawalRequest(
+    email: string, 
+    name: string, 
+    amount: string, 
+    network: string, 
+    walletAddress: string, 
+    withdrawalId: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      subject: 'Withdrawal Request Submitted - DiTokens CRM',
+      template: 'withdrawal-request',
+      context: { 
+        name, 
+        amount, 
+        network, 
+        walletAddress, 
+        withdrawalId,
+        lockPeriod: '3 years',
+        estimatedUnlockDate: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toLocaleDateString()
+      }
+    });
+  }
+
+  async sendWithdrawalRequestAdmin(
+    adminEmail: string,
+    userEmail: string,
+    userName: string,
+    amount: string,
+    network: string,
+    walletAddress: string,
+    withdrawalId: string,
+    userBalance: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: adminEmail,
+      subject: `New Withdrawal Request - ${userName} (${userEmail})`,
+      template: 'withdrawal-request-admin',
+      context: { 
+        adminEmail,
+        userEmail,
+        userName,
+        amount, 
+        network, 
+        walletAddress, 
+        withdrawalId,
+        userBalance,
+        lockPeriod: '3 years',
+        estimatedUnlockDate: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        requestTime: new Date().toLocaleString()
+      }
+    });
+  }
+
+  async sendAccountActivated(
+    email: string,
+    name: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      subject: 'Account Activated - Welcome to DiTokens CRM',
+      template: 'account-activated',
+      context: { 
+        name,
+        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+      }
+    });
+  }
+
+  async sendPurchasePending(
+    email: string,
+    name: string,
+    amount: number,
+    tokenAmount: number,
+    walletAddress: string,
+    transactionId: string,
+    paymentMethod: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      subject: 'Token Purchase Pending - Payment Required',
+      template: 'purchase-pending',
+      context: {
+        name,
+        amount,
+        tokenAmount,
+        walletAddress,
+        transactionId,
+        paymentMethod,
+        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+      }
+    });
+  }
+
+  async sendPurchasePendingAdmin(
+    adminEmail: string,
+    userEmail: string,
+    userName: string,
+    amount: string,
+    tokenAmount: string,
+    walletAddress: string,
+    transactionId: string,
+    paymentMethod: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: adminEmail,
+      subject: `New Token Purchase Request - ${userName} (${userEmail})`,
+      template: 'purchase-pending-admin',
+      context: {
+        adminEmail,
+        userEmail,
+        userName,
+        amount,
+        tokenAmount,
+        walletAddress,
+        transactionId,
+        paymentMethod,
+        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+      }
     });
   }
 

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isAdminUser } from "@/lib/admin-auth";
+import { sendAccountActivated } from "@/lib/email-events";
 
 export async function PATCH(
   request: NextRequest,
@@ -66,6 +67,20 @@ export async function PATCH(
       where: { id: userId },
       data: updateData
     });
+
+    // Send activation email if user was activated
+    if (action === "toggleStatus" && updateData.isActive && !user.isActive) {
+      try {
+        await sendAccountActivated(userId, {
+          email: updatedUser.email,
+          name: updatedUser.name
+        });
+        console.log(`Account activation email sent to ${updatedUser.email}`);
+      } catch (emailError) {
+        console.error('Failed to send account activation email:', emailError);
+        // Don't fail the API call if email fails
+      }
+    }
 
     // Log the admin action
     // In production, you might want to log this to an audit log table

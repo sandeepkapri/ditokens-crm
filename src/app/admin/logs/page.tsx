@@ -25,59 +25,18 @@ export default function AdminLogs() {
 
   const loadLogs = async () => {
     try {
-      // Mock data for now - in production, fetch from API
-      const mockLogs = [
-        {
-          id: 1,
-          timestamp: new Date().toISOString(),
-          level: "INFO",
-          message: "User login successful",
-          userId: "user123",
-          ipAddress: "192.168.1.100",
-          userAgent: "Mozilla/5.0...",
-        },
-        {
-          id: 2,
-          timestamp: new Date(Date.now() - 60000).toISOString(),
-          level: "WARN",
-          message: "Failed login attempt",
-          userId: "unknown",
-          ipAddress: "192.168.1.101",
-          userAgent: "Mozilla/5.0...",
-        },
-        {
-          id: 3,
-          timestamp: new Date(Date.now() - 120000).toISOString(),
-          level: "ERROR",
-          message: "Database connection timeout",
-          userId: "system",
-          ipAddress: "127.0.0.1",
-          userAgent: "System",
-        },
-        {
-          id: 4,
-          timestamp: new Date(Date.now() - 180000).toISOString(),
-          level: "INFO",
-          message: "Token price updated",
-          userId: "admin@ditokens.com",
-          ipAddress: "192.168.1.50",
-          userAgent: "Mozilla/5.0...",
-        },
-        {
-          id: 5,
-          timestamp: new Date(Date.now() - 240000).toISOString(),
-          level: "INFO",
-          message: "New user registration",
-          userId: "user456",
-          ipAddress: "192.168.1.102",
-          userAgent: "Mozilla/5.0...",
-        },
-      ];
-      
-      setLogs(mockLogs);
-      setLoading(false);
+      const response = await fetch('/api/admin/logs');
+      if (response.ok) {
+        const data = await response.json();
+        setLogs(data.logs || []);
+      } else {
+        console.error('Failed to load logs');
+        setLogs([]);
+      }
     } catch (error) {
       console.error("Error loading logs:", error);
+      setLogs([]);
+    } finally {
       setLoading(false);
     }
   };

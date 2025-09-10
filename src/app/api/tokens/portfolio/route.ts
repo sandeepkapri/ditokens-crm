@@ -19,6 +19,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Return user status even if inactive
+    const userStatus = {
+      isActive: user.isActive,
+      availableTokens: user.availableTokens || 0,
+      totalTokens: user.totalTokens || 0
+    };
+
+    // If user is not active, return limited data
+    if (!user.isActive) {
+      return NextResponse.json({
+        ...userStatus,
+        message: "Account is not active. Please contact support to activate your account."
+      });
+    }
+
     // Get current token price (this would come from a price feed in production)
     const currentPrice = 2.8;
 
@@ -45,6 +60,7 @@ export async function GET(request: NextRequest) {
         pricePerToken: true,
         status: true,
         description: true,
+        paymentMethod: true,
         createdAt: true,
       },
     });
@@ -58,12 +74,28 @@ export async function GET(request: NextRequest) {
       pricePerToken: transaction.pricePerToken,
       status: transaction.status,
       description: transaction.description,
-      timestamp: transaction.createdAt.toISOString(),
+      paymentMethod: transaction.paymentMethod,
+      createdAt: transaction.createdAt.toISOString(),
     }));
 
+    // Get recent purchase transactions for the purchase page
+    const recentTransactions = transactions
+      .filter(t => t.type === 'PURCHASE')
+      .slice(0, 10)
+      .map(transaction => ({
+        id: transaction.id,
+        amount: transaction.amount,
+        tokenAmount: transaction.tokenAmount,
+        status: transaction.status,
+        paymentMethod: transaction.paymentMethod,
+        createdAt: transaction.createdAt.toISOString(),
+      }));
+
     return NextResponse.json({
+      ...userStatus,
       stats: portfolioStats,
       transactions: formattedTransactions,
+      recentTransactions: recentTransactions,
     }, { status: 200 });
   } catch (error) {
     console.error("Error fetching portfolio data:", error);

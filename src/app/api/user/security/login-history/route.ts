@@ -25,58 +25,35 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // For now, we'll return mock data since we don't have a login history table yet
-    // In a real application, you would create a LoginHistory model and track all login attempts
-    
-    const mockHistory = [
-      {
-        id: "1",
-        timestamp: new Date().toISOString(),
-        ipAddress: "192.168.1.100",
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        location: "Local Network",
-        status: "SUCCESS" as const,
-        deviceType: "Mac",
-      },
-      {
-        id: "2",
-        timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-        ipAddress: "192.168.1.100",
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        location: "Local Network",
-        status: "SUCCESS" as const,
-        deviceType: "Mac",
-      },
-      {
-        id: "3",
-        timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        ipAddress: "192.168.1.100",
-        userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-        location: "Local Network",
-        status: "SUCCESS" as const,
-        deviceType: "Mac",
-      },
-      {
-        id: "4",
-        timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-        ipAddress: "192.168.1.101",
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        location: "Local Network",
-        status: "FAILED" as const,
-        deviceType: "Windows",
-      },
-    ];
+    // Fetch real login history from database
+    const loginHistory = await prisma.loginHistory.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+      take: 50 // Limit to last 50 logins
+    });
 
+    // Calculate stats from real data
     const stats = {
-      totalLogins: mockHistory.length,
-      successfulLogins: mockHistory.filter(h => h.status === "SUCCESS").length,
-      failedLogins: mockHistory.filter(h => h.status === "FAILED").length,
-      uniqueIPs: new Set(mockHistory.map(h => h.ipAddress)).size,
-      lastLogin: mockHistory[0]?.timestamp || "",
+      totalLogins: loginHistory.length,
+      successfulLogins: loginHistory.filter(h => h.status === "SUCCESS").length,
+      failedLogins: loginHistory.filter(h => h.status === "FAILED").length,
+      uniqueIPs: new Set(loginHistory.map(h => h.ipAddress)).size,
+      lastLogin: loginHistory[0]?.createdAt?.toISOString() || "",
     };
 
+    // Format the history for the frontend
+    const formattedHistory = loginHistory.map(record => ({
+      id: record.id,
+      timestamp: record.createdAt.toISOString(),
+      ipAddress: record.ipAddress,
+      userAgent: record.userAgent,
+      location: record.location || getLocationFromIP(record.ipAddress),
+      status: record.status,
+      deviceType: record.deviceType || getDeviceType(record.userAgent),
+    }));
+
     return NextResponse.json({
-      history: mockHistory,
+      history: formattedHistory,
       stats,
     }, { status: 200 });
 
@@ -87,4 +64,21 @@ export async function GET(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function getDeviceType(userAgent: string): string {
+  if (userAgent.includes("Mobile")) return "Mobile";
+  if (userAgent.includes("Tablet")) return "Tablet";
+  if (userAgent.includes("Windows")) return "Windows";
+  if (userAgent.includes("Mac")) return "Mac";
+  if (userAgent.includes("Linux")) return "Linux";
+  return "Unknown";
+}
+
+function getLocationFromIP(ip: string): string {
+  // In a real application, you would use an IP geolocation service
+  // For now, we'll show a placeholder
+  if (ip === "127.0.0.1" || ip === "localhost") return "Local";
+  if (ip.startsWith("192.168.") || ip.startsWith("10.") || ip.startsWith("172.")) return "Private Network";
+  return "Unknown Location";
 }

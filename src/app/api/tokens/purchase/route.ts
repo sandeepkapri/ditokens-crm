@@ -31,6 +31,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Check if user is active
+    if (!user.isActive) {
+      return NextResponse.json({ error: "Account is not active" }, { status: 403 });
+    }
+
     // Validate minimum purchase amount
     if (amount < 10) {
       return NextResponse.json(
@@ -39,28 +44,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate processing fee based on payment method
-    let processingFee = 0;
-    switch (paymentMethod) {
-      case "credit_card":
-        processingFee = amount * 0.025; // 2.5%
-        break;
-      case "bank_transfer":
-        processingFee = amount * 0.005; // 0.5%
-        break;
-      case "crypto":
-        processingFee = amount * 0.01; // 1.0%
-        break;
-      case "paypal":
-        processingFee = amount * 0.03; // 3.0%
-        break;
-      default:
-        processingFee = amount * 0.025; // Default 2.5%
-    }
+    // No processing fees for USDT payments
+    const processingFee = 0;
+    const totalAmount = amount;
 
-    const totalAmount = amount + processingFee;
-
-    // Create transaction record
+    // Create transaction record - PENDING until payment is confirmed
     const transaction = await prisma.transaction.create({
       data: {
         userId: user.id,
@@ -69,86 +57,45 @@ export async function POST(request: NextRequest) {
         tokenAmount,
         pricePerToken: currentPrice,
         paymentMethod,
-        status: "PENDING",
-        description: `Token purchase via ${paymentMethod}`,
+        status: "PENDING", // Stays pending until admin confirms payment
+        description: `Token purchase via ${paymentMethod} - Awaiting payment confirmation`,
         processingFee,
+        walletAddress: getWalletAddress(paymentMethod), // Add wallet address for payment
       },
     });
 
-    // Update user's token balance
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        totalTokens: { increment: tokenAmount },
-        availableTokens: { increment: tokenAmount },
-      },
-    });
+    // DO NOT credit tokens yet - wait for admin confirmation
+    // Tokens will only be credited when admin confirms payment
 
-    // If user was referred, calculate referral commission
-    if (user.referredBy) {
-      const referrer = await prisma.user.findUnique({
-        where: { referralCode: user.referredBy },
+    // Create notification for pending purchase
+    await NotificationHelpers.onTokenPurchasePending(user.id, tokenAmount, amount, transaction.id);
+
+    // Send email notification to user with payment instructions
+    try {
+      const { sendPurchasePending } = await import("@/lib/email-events");
+      await sendPurchasePending(user.id, {
+        email: user.email,
+        name: user.name || "User"
+      }, {
+        amount: totalAmount,
+        tokenAmount,
+        walletAddress: getWalletAddress(paymentMethod),
+        transactionId: transaction.id,
+        paymentMethod
       });
-
-      if (referrer) {
-        const commissionAmount = amount * 0.05; // 5% commission
-        const commissionTokenAmount = tokenAmount * 0.05;
-
-        // Create referral commission record
-        await prisma.referralCommission.create({
-          data: {
-            referrerId: referrer.id,
-            referredUserId: user.id,
-            amount: commissionAmount,
-            tokenAmount: commissionTokenAmount,
-            pricePerToken: currentPrice,
-            month: new Date().getMonth() + 1,
-            year: new Date().getFullYear(),
-          },
-        });
-
-        // Update referrer's earnings
-        await prisma.user.update({
-          where: { id: referrer.id },
-          data: {
-            referralEarnings: { increment: commissionAmount },
-          },
-        });
-      }
-    }
-
-    // In a real application, you would integrate with a payment gateway here
-    // For now, we'll simulate a successful payment
-    await prisma.transaction.update({
-      where: { id: transaction.id },
-      data: { status: "COMPLETED" },
-    });
-
-    // Create notification for successful purchase
-    await NotificationHelpers.onTokenPurchase(user.id, tokenAmount, amount);
-
-    // Create notification for referrer if applicable
-    if (user.referredBy) {
-      const referrer = await prisma.user.findUnique({
-        where: { referralCode: user.referredBy },
-      });
-
-      if (referrer) {
-        const commissionAmount = amount * 0.05; // 5% commission
-        await NotificationHelpers.onReferralCommission(
-          referrer.id, 
-          commissionAmount, 
-          user.name || "User"
-        );
-      }
+    } catch (emailError) {
+      console.error('Failed to send purchase pending email:', emailError);
     }
 
     return NextResponse.json({
-      message: "Purchase successful",
+      message: "Purchase request created. Please make payment to complete your purchase.",
       transactionId: transaction.id,
       amount: totalAmount,
       tokenAmount,
       processingFee,
+      walletAddress: getWalletAddress(paymentMethod),
+      status: "PENDING",
+      instructions: "Send USDT to the provided wallet address. Your tokens will be credited after payment confirmation."
     }, { status: 200 });
   } catch (error) {
     console.error("Error processing token purchase:", error);
@@ -165,4 +112,9 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+}
+
+function getWalletAddress(paymentMethod: string): string {
+  // All USDT networks use the same wallet address
+  return "0x7E874A697007965c6A3DdB1702828A764E7a91c3";
 }
