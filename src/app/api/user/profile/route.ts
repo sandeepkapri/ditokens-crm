@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { NotificationHelpers } from "@/lib/notifications";
+import { isDatabaseConnectionError, getDatabaseErrorMessage } from "@/lib/database-health";
 
 const profileUpdateSchema = z.object({
   name: z.string().min(1, "Name is required").optional(),
@@ -224,6 +225,18 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ user }, { status: 200 });
   } catch (error) {
     console.error("Profile fetch error:", error);
+    
+    // Handle database connection errors specifically
+    if (isDatabaseConnectionError(error)) {
+      return NextResponse.json(
+        { 
+          error: getDatabaseErrorMessage(error),
+          type: "database_error"
+        },
+        { status: 503 } // Service Unavailable
+      );
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

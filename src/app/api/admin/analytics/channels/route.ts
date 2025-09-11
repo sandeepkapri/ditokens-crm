@@ -2,14 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isAdminUser } from "@/lib/admin-auth";
-import * as logos from "@/assets/logos";
+import { isSuperAdminUser } from "@/lib/admin-auth";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.email || !isAdminUser(session)) {
+    if (!session?.user?.email || !isSuperAdminUser(session)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -29,17 +28,17 @@ export async function GET(request: NextRequest) {
 
     // Map payment methods to channels
     const channelMap = {
-      'USDT': { name: 'USDT Network', logo: logos.google },
-      'ETH': { name: 'Ethereum', logo: logos.github },
-      'BTC': { name: 'Bitcoin', logo: logos.x },
-      'BSC': { name: 'BSC Network', logo: logos.facebook },
-      'POLYGON': { name: 'Polygon', logo: logos.vimeo }
+      'USDT': { name: 'USDT Network', logo: 'USDT' },
+      'ETH': { name: 'Ethereum', logo: 'ETH' },
+      'BTC': { name: 'Bitcoin', logo: 'BTC' },
+      'BSC': { name: 'BSC Network', logo: 'BSC' },
+      'POLYGON': { name: 'Polygon', logo: 'POLYGON' }
     };
 
     const channels = channelData.map(channel => {
       const channelInfo = channelMap[channel.paymentMethod as keyof typeof channelMap] || {
         name: channel.paymentMethod,
-        logo: logos.google
+        logo: channel.paymentMethod
       };
 
       const visitors = channel._count.id;

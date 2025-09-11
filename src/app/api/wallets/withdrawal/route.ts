@@ -58,12 +58,12 @@ export async function GET(request: NextRequest) {
       })),
       requests: withdrawalRequests.map(request => ({
         id: request.id,
-        amount: request.amount,
+        amount: request.tokenAmount, // Show DIT tokens, not USD value
         network: request.network,
         address: request.walletAddress,
         status: request.status,
-        txHash: request.txHash,
-        fee: request.fee,
+        txHash: undefined, // Not available in WithdrawalRequest model
+        fee: 0, // Default fee
         timestamp: request.createdAt.toISOString(),
       })),
     });

@@ -235,7 +235,7 @@ export default function TokenPricePage() {
     );
   }
 
-  if (!session || (session.user?.email !== "admin@ditokens.com" && session.user?.email !== "superadmin@ditokens.com")) {
+  if (!session || !isSuperAdminUser(session)) {
     return null;
   }
 

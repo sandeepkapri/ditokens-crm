@@ -48,7 +48,7 @@ export default function NotificationManagementPage() {
   useEffect(() => {
     if (status === "loading") return;
     
-    if (!session || (!isAdminUser(session) && session.user.email !== "superadmin@ditokens.com")) {
+    if (!session || !isAdminUser(session)) {
       router.push("/auth/sign-in");
       return;
     }
@@ -153,7 +153,7 @@ export default function NotificationManagementPage() {
     );
   }
 
-  if (!session || (!isAdminUser(session) && session.user.email !== "superadmin@ditokens.com")) {
+  if (!session || !isAdminUser(session)) {
     return null;
   }
 

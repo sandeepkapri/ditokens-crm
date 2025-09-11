@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,45 +8,44 @@ datasource db {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  name              String
-  email             String    @unique
-  contactNumber     String
-  country           String
-  state             String
-  password          String
-  role              UserRole  @default(USER)
-  isActive          Boolean   @default(false) // Changed to false by default
-  emailVerified     Boolean   @default(false)
-  referralCode      String    @unique
-  referredBy        String?   // Referral code of the user who referred this user
-  walletAddress     String?   // For deposit/withdrawal
-  usdtWalletAddress String?   // USDT ERC-20 wallet address for payments
-  totalTokens       Float     @default(0)
-  stakedTokens      Float     @default(0)
-  availableTokens   Float     @default(0)
-  totalEarnings     Float     @default(0) // Only price income, no staking rewards
-  referralEarnings  Float     @default(0)
-  profilePicture    String?   // URL or path to profile picture
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-
-  // Relations
-  referrals         User[]    @relation("UserReferrals")
-  referrer          User?     @relation("UserReferrals", fields: [referredBy], references: [referralCode])
-  transactions      Transaction[]
-  stakingRecords   StakingRecord[]
-  sentMessages     Message[]  @relation("SentMessages")
-  receivedMessages Message[]  @relation("ReceivedMessages")
-  profileUpdates   ProfileUpdate[]
-  userSettings     UserSettings?
-  referrerCommissions ReferralCommission[] @relation("ReferrerCommissions")
+  id                      String               @id @default(cuid())
+  name                    String
+  email                   String               @unique
+  contactNumber           String
+  country                 String
+  state                   String
+  password                String
+  role                    UserRole             @default(USER)
+  isActive                Boolean              @default(false)
+  emailVerified           Boolean              @default(false)
+  referralCode            String               @unique
+  referredBy              String?
+  walletAddress           String?
+  totalTokens             Float                @default(0)
+  stakedTokens            Float                @default(0)
+  availableTokens         Float                @default(0)
+  totalEarnings           Float                @default(0)
+  referralEarnings        Float                @default(0)
+  createdAt               DateTime             @default(now())
+  updatedAt               DateTime             @updatedAt
+  profilePicture          String?
+  usdtWalletAddress       String?
+  loginHistory            LoginHistory[]
+  receivedMessages        Message[]            @relation("ReceivedMessages")
+  sentMessages            Message[]            @relation("SentMessages")
+  notifications           Notification[]
+  profileUpdates          ProfileUpdate[]
   referredUserCommissions ReferralCommission[] @relation("ReferredUserCommissions")
-  notifications    Notification[]
-  withdrawalRequests WithdrawalRequest[]
-  withdrawalWallets WithdrawalWallet[]
-  loginHistory     LoginHistory[]
+  referrerCommissions     ReferralCommission[] @relation("ReferrerCommissions")
+  stakingRecords          StakingRecord[]
+  transactions            Transaction[]
+  userSettings            UserSettings?
+  referrer                User?                @relation("UserReferrals", fields: [referredBy], references: [referralCode])
+  referrals               User[]               @relation("UserReferrals")
+  withdrawalRequests      WithdrawalRequest[]
+  withdrawalWallets       WithdrawalWallet[]
 
+  @@index([referredBy], map: "users_referredBy_fkey")
   @@map("users")
 }
 
@@ -63,147 +59,142 @@ model TokenPrice {
 }
 
 model StakingRecord {
-  id            String   @id @default(cuid())
-  userId        String
-  amount        Float
-  startDate     DateTime @default(now())
-  endDate       DateTime
-  status        String   @default("ACTIVE") // ACTIVE, COMPLETED, PENDING
-  apy           Float    @default(0.0) // No staking income - always 0
-  rewards       Float    @default(0) // No staking rewards - always 0
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  amount    Float
+  startDate DateTime @default(now())
+  endDate   DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  apy       Float    @default(0)
+  rewards   Float    @default(0)
+  status    String   @default("ACTIVE")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "staking_records_userId_fkey")
   @@map("staking_records")
 }
 
 model Transaction {
-  id            String           @id @default(cuid())
+  id            String            @id @default(cuid())
   userId        String
   type          TransactionType
   amount        Float
   tokenAmount   Float
   pricePerToken Float
   status        TransactionStatus @default(PENDING)
-  paymentMethod String?
-  description   String?
-  processingFee Float            @default(0)
-  txHash        String?          // Blockchain transaction hash
+  txHash        String?
   walletAddress String?
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  description   String?
+  paymentMethod String?
+  processingFee Float             @default(0)
+  adminNotes    String?
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "transactions_userId_fkey")
   @@map("transactions")
 }
 
 model ReferralCommission {
-  id            String   @id @default(cuid())
-  referrerId    String
+  id             String    @id @default(cuid())
+  referrerId     String
   referredUserId String
-  amount        Float
-  tokenAmount   Float
-  pricePerToken Float
-  isPaid        Boolean  @default(false)
-  paidAt        DateTime?
-  month         Int      // Month number (1-12)
-  year          Int      // Year
-  createdAt     DateTime @default(now())
-
-  // Relations
-  referrer      User     @relation("ReferrerCommissions", fields: [referrerId], references: [id], onDelete: Cascade)
-  referredUser  User     @relation("ReferredUserCommissions", fields: [referredUserId], references: [id], onDelete: Cascade)
+  amount         Float
+  tokenAmount    Float
+  pricePerToken  Float
+  isPaid         Boolean   @default(false)
+  paidAt         DateTime?
+  month          Int
+  year           Int
+  createdAt      DateTime  @default(now())
+  referredUser   User      @relation("ReferredUserCommissions", fields: [referredUserId], references: [id], onDelete: Cascade)
+  referrer       User      @relation("ReferrerCommissions", fields: [referrerId], references: [id], onDelete: Cascade)
 
   @@unique([referrerId, referredUserId, month, year], name: "referrer_referred_month_year")
+  @@index([referredUserId], map: "referral_commissions_referredUserId_fkey")
   @@map("referral_commissions")
 }
 
-// New model for commission settings - Only referral commission, no staking
 model CommissionSettings {
-  id                String   @id @default(cuid())
-  referralRate      Float    @default(5.0) // Default 5% - only referral commission
-  updatedBy         String   // User ID who updated this
-  updatedAt         DateTime @updatedAt
-  createdAt         DateTime @default(now())
+  id           String   @id @default(cuid())
+  referralRate Float    @default(5)
+  updatedBy    String
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
 
   @@map("commission_settings")
 }
 
-// New model for withdrawal requests with 3-year lock
 model WithdrawalRequest {
-  id            String   @id @default(cuid())
+  id            String           @id @default(cuid())
   userId        String
   amount        Float
   tokenAmount   Float
   network       String
   walletAddress String
   status        WithdrawalStatus @default(PENDING)
-  requestDate   DateTime @default(now())
+  requestDate   DateTime         @default(now())
   processedDate DateTime?
-  lockPeriod    Int      @default(1095) // 3 years in days
-  canWithdraw   Boolean  @default(false) // Only true after 3 years
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  lockPeriod    Int              @default(1095)
+  canWithdraw   Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "withdrawal_requests_userId_fkey")
   @@map("withdrawal_requests")
 }
 
 model Message {
-  id            String   @id @default(cuid())
-  senderId      String
-  receiverId    String
-  subject       String?
-  content       String
-  messageType   MessageType @default(EMAIL)
-  isRead        Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id          String      @id @default(cuid())
+  senderId    String
+  receiverId  String
+  subject     String?
+  content     String
+  messageType MessageType @default(EMAIL)
+  isRead      Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  receiver    User        @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  sender      User        @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
 
-  // Relations
-  sender        User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
-  receiver      User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
-
+  @@index([receiverId], map: "messages_receiverId_fkey")
+  @@index([senderId], map: "messages_senderId_fkey")
   @@map("messages")
 }
 
 model LiveChat {
-  id            String   @id @default(cuid())
-  userId        String
-  message       String
-  isFromUser    Boolean  @default(true)
-  isRead        Boolean  @default(false)
-  createdAt     DateTime @default(now())
+  id         String   @id @default(cuid())
+  userId     String
+  message    String
+  isFromUser Boolean  @default(true)
+  isRead     Boolean  @default(false)
+  createdAt  DateTime @default(now())
 
   @@map("live_chats")
 }
 
 model SystemSettings {
-  id                String   @id @default(cuid())
-  key               String   @unique
-  value             String
-  description       String?
-  updatedAt         DateTime @updatedAt
-  updatedBy         String?
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+  updatedBy   String?
 
   @@map("system_settings")
 }
 
 model TokenSupply {
-  id                String   @id @default(cuid())
-  totalSupply       Float    @default(50000000) // 50M total token supply limit
-  tokensSold        Float    @default(0) // Total tokens sold so far
-  tokensAvailable   Float    @default(50000000) // Remaining tokens for sale
-  updatedBy         String
-  updatedAt         DateTime @updatedAt
-  createdAt         DateTime @default(now())
+  id              String   @id @default(cuid())
+  totalSupply     Float    @default(50000000)
+  tokensSold      Float    @default(0)
+  tokensAvailable Float    @default(50000000)
+  updatedBy       String
+  updatedAt       DateTime @updatedAt
+  createdAt       DateTime @default(now())
 
   @@map("token_supply")
 }
@@ -220,73 +211,86 @@ model PasswordReset {
 }
 
 model ProfileUpdate {
-  id          String           @id @default(cuid())
-  userId      String
-  field       String           // Field that was updated (e.g., "name", "email", "password")
-  oldValue    String?          // Previous value
-  newValue    String?          // New value
-  updateType  ProfileUpdateType // Type of update
-  ipAddress   String?          // IP address of the update
-  userAgent   String?          // User agent/browser info
-  createdAt   DateTime         @default(now())
+  id         String            @id @default(cuid())
+  userId     String
+  field      String
+  oldValue   String?
+  newValue   String?
+  updateType ProfileUpdateType
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime          @default(now())
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "profile_updates_userId_fkey")
   @@map("profile_updates")
 }
 
 model UserSettings {
-  id                String   @id @default(cuid())
-  userId            String   @unique
+  id                 String   @id @default(cuid())
+  userId             String   @unique
   emailNotifications Boolean  @default(true)
-  smsNotifications  Boolean  @default(false)
-  marketingEmails   Boolean  @default(true)
-  darkMode          Boolean  @default(false)
-  language          String   @default("en")
-  timezone          String   @default("UTC")
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-
-  // Relations
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  smsNotifications   Boolean  @default(false)
+  marketingEmails    Boolean  @default(true)
+  darkMode           Boolean  @default(false)
+  language           String   @default("en")
+  timezone           String   @default("UTC")
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("user_settings")
 }
 
 model WithdrawalWallet {
-  id        String   @id @default(cuid())
-  userId    String
-  address   String
-  network   String   // ethereum, usdt-erc20, usdt-trc20, usdt-bep20, usdt-polygon, bitcoin, polygon, bsc
-  label     String
-  isActive  Boolean  @default(true)
-  isVerified Boolean @default(false)
-  lastUsed  DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String    @id @default(cuid())
+  userId     String
+  address    String
+  network    String
+  label      String
+  isActive   Boolean   @default(true)
+  isVerified Boolean   @default(false)
+  lastUsed   DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "withdrawal_wallets_userId_fkey")
   @@map("withdrawal_wallets")
 }
 
 model LoginHistory {
-  id        String   @id @default(cuid())
-  userId    String
-  ipAddress String
-  userAgent String
-  status    LoginStatus @default(SUCCESS)
-  location  String?
+  id         String      @id @default(cuid())
+  userId     String
+  ipAddress  String
+  userAgent  String
+  status     LoginStatus @default(SUCCESS)
+  location   String?
   deviceType String?
-  browser   String?
-  createdAt DateTime @default(now())
+  browser    String?
+  createdAt  DateTime    @default(now())
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([userId], map: "login_history_userId_fkey")
   @@map("login_history")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String?
+  type      NotificationType
+  title     String
+  message   String
+  icon      String?
+  data      String?          @db.LongText
+  isRead    Boolean          @default(false)
+  isGlobal  Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  user      User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "notifications_userId_fkey")
+  @@map("notifications")
 }
 
 enum UserRole {
@@ -339,25 +343,6 @@ enum LoginStatus {
   SUCCESS
   FAILED
   BLOCKED
-}
-
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String?
-  type      NotificationType
-  title     String
-  message   String
-  icon      String?  // URL or icon name
-  data      Json?    // Additional data for the notification
-  isRead    Boolean  @default(false)
-  isGlobal  Boolean  @default(false) // For notifications to all users
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Relations
-  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@map("notifications")
 }
 
 enum NotificationType {

@@ -39,9 +39,23 @@ export class EmailService {
   }
 
   private createTransporter(): nodemailer.Transporter {
-    const emailProvider = process.env.EMAIL_PROVIDER || 'zoho';
+    const emailProvider = process.env.EMAIL_PROVIDER || 'zeptomail';
     
     switch (emailProvider.toLowerCase()) {
+      case 'zeptomail':
+        return nodemailer.createTransport({
+          host: process.env.ZEPTOMAIL_SMTP_HOST || 'smtp.zeptomail.in',
+          port: parseInt(process.env.ZEPTOMAIL_SMTP_PORT || '587'),
+          secure: process.env.ZEPTOMAIL_SMTP_SECURE === 'true',
+          auth: {
+            user: process.env.ZEPTOMAIL_USERNAME || 'emailapikey',
+            pass: process.env.ZEPTOMAIL_PASSWORD || ''
+          },
+          tls: {
+            rejectUnauthorized: false
+          }
+        });
+
       case 'zoho':
         return nodemailer.createTransport({
           host: process.env.ZOHO_SMTP_HOST || 'smtp.zoho.in',
@@ -115,8 +129,14 @@ export class EmailService {
         'account-activated',
         'withdrawal-request',
         'withdrawal-request-admin',
+        'withdrawal-approved',
+        'withdrawal-rejected',
+        'withdrawal-processing-admin',
         'purchase-pending',
-        'purchase-pending-admin'
+        'purchase-pending-admin',
+        'user-registration-admin',
+        'payment-confirmation-admin',
+        'payment-rejection-admin'
       ];
 
       templateFiles.forEach(templateName => {
@@ -225,7 +245,72 @@ export class EmailService {
           <p>Best regards,<br>DiTokens Team</p>
         </body>
         </html>
-      `
+      `,
+      'withdrawal-approved': `
+        <!DOCTYPE html>
+        <html>
+        <head><title>Withdrawal Approved</title></head>
+        <body>
+          <h1>Withdrawal Approved</h1>
+          <p>Hello {{name}},</p>
+          <p>Your withdrawal request of {{amount}} has been approved and is being processed.</p>
+          <p>Network: {{network}}</p>
+          <p>Wallet Address: {{walletAddress}}</p>
+          <p>Transaction ID: {{transactionId}}</p>
+          <p>Processing Time: {{processingTime}}</p>
+          <p>Best regards,<br>DiTokens Team</p>
+        </body>
+        </html>
+      `,
+      'withdrawal-rejected': `
+        <!DOCTYPE html>
+        <html>
+        <head><title>Withdrawal Request Update</title></head>
+        <body>
+          <h1>Withdrawal Request Update</h1>
+          <p>Hello {{name}},</p>
+          <p>Your withdrawal request of {{amount}} has been rejected.</p>
+          <p>Reason: {{reason}}</p>
+          <p>If you have questions, please contact: {{supportContact}}</p>
+          <p>Best regards,<br>DiTokens Team</p>
+        </body>
+        </html>
+      `,
+      'withdrawal-processing-admin': `
+        <!DOCTYPE html>
+        <html>
+        <head><title>Withdrawal Processing Admin</title></head>
+        <body>
+          <h1>Withdrawal {{action}} - {{userName}}</h1>
+          <p>User: {{userEmail}}</p>
+          <p>Amount: {{amount}}</p>
+          <p>Network: {{network}}</p>
+          <p>Wallet Address: {{walletAddress}}</p>
+          <p>Transaction ID: {{transactionId}}</p>
+          <p>Action: {{action}}</p>
+          <p>Best regards,<br>DiTokens Team</p>
+        </body>
+        </html>
+      `,
+      'user-registration-admin': `
+        <!DOCTYPE html>
+        <html>
+        <head><title>New User Registration</title></head>
+        <body>
+          <h1>New User Registration</h1>
+          <p>A new user has registered:</p>
+          <p>Name: {{userName}}</p>
+          <p>Email: {{userEmail}}</p>
+          <p>Contact: {{contactNumber}}</p>
+          <p>Country: {{country}}</p>
+          <p>State: {{state}}</p>
+          <p>Referral Code: {{referralCode}}</p>
+          <p>Registration Time: {{registrationTime}}</p>
+          <p>Please review and activate the account if appropriate.</p>
+          <p>Best regards,<br>DiTokens Team</p>
+        </body>
+        </html>
+      `,
     };
 
     return fallbackTemplates[templateName] || fallbackTemplates.notification;
@@ -297,12 +382,33 @@ export class EmailService {
     });
   }
 
-  async sendPurchaseConfirmation(email: string, name: string, tokens: string, amount: string): Promise<boolean> {
+  async sendPurchaseConfirmation(
+    email: string, 
+    name: string, 
+    tokens: string, 
+    amount: string,
+    transactionId?: string,
+    paymentMethod?: string,
+    tokenPrice?: string,
+    processingFee?: string,
+    currentValue?: string
+  ): Promise<boolean> {
     return this.sendEmail({
       to: email,
       subject: 'Purchase Confirmation - DiTokens CRM',
       template: 'purchase-confirmation',
-      context: { name, tokens, amount }
+      context: { 
+        name, 
+        tokens, 
+        amount,
+        purchaseDate: new Date().toLocaleDateString(),
+        transactionId: transactionId || 'N/A',
+        paymentMethod: paymentMethod || 'N/A',
+        tokenPrice: tokenPrice || 'N/A',
+        processingFee: processingFee || '0',
+        currentValue: currentValue || amount,
+        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+      }
     });
   }
 
@@ -450,6 +556,218 @@ export class EmailService {
         walletAddress,
         transactionId,
         paymentMethod,
+        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+      }
+    });
+  }
+
+  async sendWithdrawalApproved(
+    email: string,
+    name: string,
+    amount: string,
+    network: string,
+    walletAddress: string,
+    transactionId: string,
+    processingTime: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      subject: 'Withdrawal Approved - Funds Processing',
+      template: 'withdrawal-approved',
+      context: {
+        name,
+        amount,
+        network,
+        walletAddress,
+        transactionId,
+        processingTime,
+        supportEmail: process.env.EMAIL_FROM || 'support@ditokens.com'
+      }
+    });
+  }
+
+  async sendWithdrawalRejected(
+    email: string,
+    name: string,
+    amount: string,
+    network: string,
+    walletAddress: string,
+    transactionId: string,
+    reason: string,
+    supportContact: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      subject: 'Withdrawal Request Update',
+      template: 'withdrawal-rejected',
+      context: {
+        name,
+        amount,
+        network,
+        walletAddress,
+        transactionId,
+        reason,
+        supportContact,
+        supportEmail: process.env.EMAIL_FROM || 'support@ditokens.com'
+      }
+    });
+  }
+
+  async sendWithdrawalProcessingAdmin(
+    adminEmail: string,
+    userName: string,
+    userEmail: string,
+    amount: string,
+    network: string,
+    walletAddress: string,
+    transactionId: string,
+    action: string,
+    adminNotes?: string,
+    userId?: string
+  ): Promise<boolean> {
+    // Normalize action to lowercase for comparison
+    const normalizedAction = action.toLowerCase();
+    const isApproved = normalizedAction === 'approved' || normalizedAction === 'approve';
+    
+    // Set dynamic styling and content based on action
+    const headerColor = isApproved ? '#10b981' : '#ef4444';
+    const infoBoxColor = isApproved ? '#ecfdf5' : '#fef2f2';
+    const borderColor = isApproved ? '#10b981' : '#ef4444';
+    const statusBoxColor = isApproved ? '#ecfdf5' : '#fef2f2';
+    const statusIcon = isApproved ? '✅' : '❌';
+    const statusTitle = isApproved ? 'Withdrawal Approved Successfully' : 'Withdrawal Rejected';
+    const statusDescription = isApproved 
+      ? 'The withdrawal request has been approved and is now being processed for transfer to the user\'s wallet.'
+      : 'The withdrawal request has been rejected. Please review the reason and contact the user if necessary.';
+    const actionTitle = isApproved ? 'Approval Confirmed' : 'Rejection Confirmed';
+    const impactDescription = isApproved 
+      ? 'User will receive their funds within 1-3 business days. Tokens have been deducted from their account.'
+      : 'User\'s tokens remain in their account. They have been notified of the rejection.';
+    
+    return this.sendEmail({
+      to: adminEmail,
+      subject: `Withdrawal ${isApproved ? 'Approved' : 'Rejected'} - ${userName}`,
+      template: 'withdrawal-processing-admin',
+      context: {
+        adminEmail,
+        userName,
+        userEmail,
+        amount,
+        network,
+        walletAddress,
+        transactionId,
+        action: isApproved ? 'Approved' : 'Rejected',
+        adminNotes,
+        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+        // Template-specific variables
+        headerColor,
+        infoBoxColor,
+        borderColor,
+        statusBoxColor,
+        statusIcon,
+        statusTitle,
+        statusDescription,
+        actionTitle,
+        impactDescription,
+        tokenAmount: amount, // Assuming amount is in DIT tokens
+        fee: '0.00', // Default fee
+        oldStatus: 'PENDING',
+        newStatus: isApproved ? 'APPROVED' : 'REJECTED',
+        processedBy: 'Admin',
+        processedTime: new Date().toLocaleString(),
+        reason: adminNotes || (isApproved ? 'Approved by admin' : 'Rejected by admin'),
+        emailSent: true,
+        requiresAttention: !isApproved,
+        attentionMessage: isApproved ? '' : 'User has been notified of rejection. Consider following up if needed.',
+        adminDashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+        userId: userId || 'unknown'
+      }
+    });
+  }
+
+  async sendUserRegistrationAdmin(
+    adminEmail: string,
+    userName: string,
+    userEmail: string,
+    contactNumber: string,
+    country: string,
+    state: string,
+    referralCode: string,
+    registrationTime: string,
+    referredBy?: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: adminEmail,
+      subject: `New User Registration - ${userName} (${userEmail})`,
+      template: 'user-registration-admin',
+      context: {
+        adminEmail,
+        userName,
+        userEmail,
+        contactNumber,
+        country,
+        state,
+        referralCode,
+        referredBy,
+        registrationTime,
+        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+      }
+    });
+  }
+
+  async sendPaymentConfirmationAdmin(
+    adminEmail: string,
+    userName: string,
+    userEmail: string,
+    amount: string,
+    tokenAmount: string,
+    transactionId: string,
+    paymentMethod: string,
+    adminNotes?: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: adminEmail,
+      subject: `Payment Confirmed - ${userName} (${userEmail})`,
+      template: 'payment-confirmation-admin',
+      context: {
+        adminEmail,
+        userName,
+        userEmail,
+        amount,
+        tokenAmount,
+        transactionId,
+        paymentMethod,
+        adminNotes,
+        confirmationTime: new Date().toLocaleString(),
+        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+      }
+    });
+  }
+
+  async sendPaymentRejectionAdmin(
+    adminEmail: string,
+    userName: string,
+    userEmail: string,
+    amount: string,
+    tokenAmount: string,
+    transactionId: string,
+    paymentMethod: string,
+    adminNotes?: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: adminEmail,
+      subject: `Payment Rejected - ${userName} (${userEmail})`,
+      template: 'payment-rejection-admin',
+      context: {
+        adminEmail,
+        userName,
+        userEmail,
+        amount,
+        tokenAmount,
+        transactionId,
+        paymentMethod,
+        adminNotes,
+        rejectionTime: new Date().toLocaleString(),
         dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
       }
     });

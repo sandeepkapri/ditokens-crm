@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isDatabaseConnectionError, getDatabaseErrorMessage } from "@/lib/database-health";
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,6 +56,21 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching token prices:", error);
+    
+    // Handle database connection errors specifically
+    if (isDatabaseConnectionError(error)) {
+      return NextResponse.json(
+        { 
+          error: getDatabaseErrorMessage(error),
+          type: "database_error",
+          priceData: [], // Return empty data for graceful degradation
+          count: 0,
+          timeframe: "7d"
+        },
+        { status: 503 } // Service Unavailable
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to fetch token prices" },
       { status: 500 }

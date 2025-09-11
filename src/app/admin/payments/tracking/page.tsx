@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { isAdminUser } from "@/lib/admin-auth";
+import { isSuperAdminUser } from "@/lib/admin-auth";
 
 interface PendingTransaction {
   id: string;
@@ -35,18 +35,7 @@ export default function PaymentTrackingPage() {
   const [searchDate, setSearchDate] = useState("");
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  useEffect(() => {
-    if (status === "loading") return;
-    
-    if (!isAdminUser(session)) {
-      router.push("/auth/sign-in");
-      return;
-    }
-
-    loadTransactions();
-  }, [status, session, router]);
-
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -67,7 +56,18 @@ export default function PaymentTrackingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchAmount, searchDate]);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    
+    if (!isSuperAdminUser(session)) {
+      router.push("/admin/dashboard");
+      return;
+    }
+
+    loadTransactions();
+  }, [status, session?.user?.email, loadTransactions]);
 
   const handleSearch = () => {
     loadTransactions();

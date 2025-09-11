@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { LogOutIcon, SettingsIcon, UserIcon } from "./icons";
 import { getAvatarUrl } from "@/lib/utils/avatar";
+import { isAdminUser, isSuperAdminUser } from "@/lib/admin-auth";
 
 export function UserInfo() {
   const [isOpen, setIsOpen] = useState(false);
@@ -23,8 +24,8 @@ export function UserInfo() {
   const [mounted, setMounted] = useState(false);
 
   // Check if user is admin/superadmin
-  const isAdmin = session?.user?.email === "admin@ditokens.com";
-  const isSuperAdmin = session?.user?.email === "superadmin@ditokens.com";
+  const isAdmin = isAdminUser(session);
+  const isSuperAdmin = isSuperAdminUser(session);
   const isAdminRoute = pathname.startsWith("/admin");
 
   // Ensure client-side rendering

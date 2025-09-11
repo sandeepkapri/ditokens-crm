@@ -26,28 +26,6 @@ export const getAdminNavData = (isSuperAdmin: boolean) => [
         ],
       },
       {
-        title: "Payment Management",
-        icon: Icons.PieChart,
-        items: [
-          {
-            title: "Transaction History",
-            url: "/admin/payments/transactions",
-          },
-          {
-            title: "Pending Payments",
-            url: "/admin/payments/pending",
-          },
-          {
-            title: "Payment Tracking",
-            url: "/admin/payments/tracking",
-          },
-          {
-            title: "Wallet Management",
-            url: "/admin/wallets/manage",
-          },
-        ],
-      },
-      {
         title: "Token Management",
         icon: Icons.PieChart,
         items: [
@@ -171,12 +149,24 @@ export const getAdminNavData = (isSuperAdmin: boolean) => [
           ],
         },
         {
-          title: "Withdrawal Management",
+          title: "Payment Management",
           icon: Icons.PieChart,
           items: [
             {
-              title: "Withdrawal Approvals",
+              title: "Payment Approvals",
               url: "/admin/payments",
+            },
+            {
+              title: "Transaction History",
+              url: "/admin/payments/transactions",
+            },
+            {
+              title: "Withdrawal Management",
+              url: "/admin/payments/withdrawals",
+            },
+            {
+              title: "Wallet Management",
+              url: "/admin/wallets/manage",
             },
           ],
         },

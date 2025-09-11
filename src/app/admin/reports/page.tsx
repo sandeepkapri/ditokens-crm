@@ -45,7 +45,7 @@ export default function ReportsPage() {
     );
   }
 
-  if (!session || (!isAdminUser(session) && session.user.email !== "superadmin@ditokens.com")) {
+  if (!session || !isAdminUser(session)) {
     router.push("/auth/sign-in");
     return null;
   }

@@ -2,8 +2,8 @@
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { isAdminUser } from "@/lib/admin-auth";
+import { useEffect, useState, useCallback } from "react";
+import { isSuperAdminUser } from "@/lib/admin-auth";
 
 interface Transaction {
   id: string;
@@ -26,20 +26,9 @@ export default function TransactionHistory() {
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
-    if (status === "loading") return;
-    
-    if (!session || !isAdminUser(session)) {
-      router.push("/auth/sign-in");
-      return;
-    }
-
-    loadTransactions();
-  }, [status, session, router]);
-
-  const loadTransactions = async () => {
+  const loadTransactions = useCallback(async () => {
     try {
-      const response = await fetch('/api/admin/transactions');
+      const response = await fetch('/api/admin/payments/transactions');
       if (response.ok) {
         const data = await response.json();
         setTransactions(data.transactions || []);
@@ -53,7 +42,18 @@ export default function TransactionHistory() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    
+    if (!session || !isSuperAdminUser(session)) {
+      router.push("/admin/dashboard");
+      return;
+    }
+
+    loadTransactions();
+  }, [status, session?.user?.email, loadTransactions]);
 
   const filteredTransactions = transactions.filter(transaction => {
     const matchesFilter = filter === "all" || transaction.status.toLowerCase() === filter.toLowerCase();
@@ -99,7 +99,7 @@ export default function TransactionHistory() {
     );
   }
 
-  if (!session || !isAdminUser(session)) {
+  if (!session || !isSuperAdminUser(session)) {
     return null;
   }
 
@@ -167,9 +167,6 @@ export default function TransactionHistory() {
                   <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                     Date
                   </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Actions
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-box-dark divide-y divide-gray-200 dark:divide-gray-700">
@@ -213,18 +210,6 @@ export default function TransactionHistory() {
                       <p className="text-xs text-gray-500 dark:text-gray-400">
                         {new Date(transaction.createdAt).toLocaleTimeString()}
                       </p>
-                    </td>
-                    <td className="px-4 py-4">
-                      <div className="flex space-x-2">
-                        <button className="text-primary hover:text-primary-dark text-sm font-medium">
-                          View
-                        </button>
-                        {transaction.status === "PENDING" && (
-                          <button className="text-green-600 hover:text-green-800 text-sm font-medium">
-                            Approve
-                          </button>
-                        )}
-                      </div>
                     </td>
                   </tr>
                 ))}

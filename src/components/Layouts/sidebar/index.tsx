@@ -11,6 +11,7 @@ import { getAdminNavData } from "./data/admin-nav";
 import { ArrowLeftIcon, ChevronUp } from "./icons";
 
 import { useSidebarContext } from "./sidebar-context";
+import { isAdminUser, isSuperAdminUser } from "@/lib/admin-auth";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -19,8 +20,8 @@ export function Sidebar() {
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
 
   // Determine which navigation data to use
-  const isAdmin = session?.user?.email === "admin@ditokens.com";
-  const isSuperAdmin = session?.user?.email === "superadmin@ditokens.com";
+  const isAdmin = isAdminUser(session);
+  const isSuperAdmin = isSuperAdminUser(session);
   const isAdminRoute = pathname.startsWith("/admin");
   const navData = isAdminRoute ? getAdminNavData(isSuperAdmin) : getNavData(isAdmin || isSuperAdmin);
 

@@ -6,7 +6,7 @@ import { z } from "zod";
 import { sendWithdrawalRequest, sendWithdrawalRequestAdmin } from "@/lib/email-events";
 
 const withdrawSchema = z.object({
-  amount: z.number().positive(),
+  tokenAmount: z.number().positive(), // DIT tokens to withdraw
   network: z.string().min(1),
   walletAddress: z.string().min(1),
 });
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { amount, network, walletAddress } = withdrawSchema.parse(body);
+    const { tokenAmount, network, walletAddress } = withdrawSchema.parse(body);
 
     // Get the current user
     const user = await prisma.user.findUnique({
@@ -43,10 +43,10 @@ export async function POST(request: NextRequest) {
       }, { status: 403 });
     }
 
-    // Check if user has sufficient balance
-    if (user.availableTokens < amount) {
+    // Check if user has sufficient available tokens (not staked tokens)
+    if (user.availableTokens < tokenAmount) {
       return NextResponse.json(
-        { error: "Insufficient tokens available for withdrawal" },
+        { error: `Insufficient available tokens. You have ${user.availableTokens.toFixed(2)} DIT tokens available for withdrawal.` },
         { status: 400 }
       );
     }
@@ -59,21 +59,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate token value at current price
+    // Calculate USD value at current price
     const currentPrice = await getCurrentTokenPrice();
-    const tokenAmount = amount / currentPrice;
+    const amount = tokenAmount * currentPrice;
 
-    // Create withdrawal request with 3-year lock
+    // Create withdrawal request (no lock period for regular withdrawals)
     const withdrawalRequest = await prisma.withdrawalRequest.create({
       data: {
         userId: user.id,
-        amount,
-        tokenAmount,
+        amount, // USD value
+        tokenAmount, // DIT tokens
         network,
         walletAddress,
         status: "PENDING",
-        lockPeriod: 1095, // 3 years in days
-        canWithdraw: false, // Will be set to true after 3 years
+        lockPeriod: 0, // No lock period for regular withdrawals
+        canWithdraw: true, // Can be withdrawn immediately after approval
       },
     });
 
@@ -82,8 +82,8 @@ export async function POST(request: NextRequest) {
       data: {
         userId: user.id,
         type: "WITHDRAWAL",
-        amount,
-        tokenAmount,
+        amount, // USD value
+        tokenAmount, // DIT tokens
         pricePerToken: currentPrice,
         paymentMethod: network,
         status: "PENDING",
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Update user's available tokens (reserve them)
+    // Update user's available tokens (reserve them for withdrawal)
     await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -102,19 +102,17 @@ export async function POST(request: NextRequest) {
     });
 
     // Send notifications
-    const estimatedUnlockDate = new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toISOString();
-    
     // Send notification to user
     try {
       await sendWithdrawalRequest(user.id, {
         email: user.email,
         name: user.name,
-        amount: amount.toString(),
+        amount: amount.toString(), // USD value
         network,
         walletAddress,
         withdrawalId: withdrawalRequest.id,
-        lockPeriod: "3 years",
-        estimatedUnlockDate: new Date(estimatedUnlockDate).toLocaleDateString(),
+        lockPeriod: "No lock period", // Regular withdrawals have no lock
+        estimatedUnlockDate: "Immediate processing after approval",
       });
     } catch (emailError) {
       console.error('Failed to send user withdrawal notification:', emailError);
@@ -127,13 +125,13 @@ export async function POST(request: NextRequest) {
         userId: user.id,
         userEmail: user.email,
         userName: user.name,
-        amount: amount.toString(),
+        amount: amount.toString(), // USD value
         network,
         walletAddress,
         withdrawalId: withdrawalRequest.id,
-        lockPeriod: "3 years",
-        estimatedUnlockDate: new Date(estimatedUnlockDate).toLocaleDateString(),
-        userBalance: user.availableTokens.toString(),
+        lockPeriod: "No lock period", // Regular withdrawals have no lock
+        estimatedUnlockDate: "Immediate processing after approval",
+        userBalance: (user.availableTokens + tokenAmount).toString(), // Show balance before withdrawal
       });
     } catch (emailError) {
       console.error('Failed to send admin withdrawal notification:', emailError);
@@ -143,12 +141,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: "Withdrawal request submitted successfully",
       withdrawalId: withdrawalRequest.id,
-      amount,
-      tokenAmount,
+      tokenAmount, // DIT tokens
+      amount, // USD value
       network,
       walletAddress,
-      lockPeriod: "3 years",
-      estimatedUnlockDate,
+      lockPeriod: "No lock period", // Regular withdrawals have no lock
+      estimatedUnlockDate: "Immediate processing after approval",
+      currentPrice,
     }, { status: 200 });
   } catch (error) {
     console.error("Error processing withdrawal request:", error);

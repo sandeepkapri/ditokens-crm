@@ -5,20 +5,6 @@ import { isSuperAdminUser } from "@/lib/admin-auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-interface WithdrawalRequest {
-  id: string;
-  userId: string;
-  userEmail: string;
-  userName: string;
-  amount: number;
-  network: string;
-  address: string;
-  status: "PENDING" | "APPROVED" | "REJECTED" | "PROCESSING";
-  fee: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
 interface Transaction {
   id: string;
   userId: string;
@@ -35,11 +21,9 @@ interface Transaction {
 export default function AdminPaymentsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterType, setFilterType] = useState("all");
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -59,19 +43,14 @@ export default function AdminPaymentsPage() {
 
   const loadPaymentData = async () => {
     try {
-      const [withdrawalResponse, transactionResponse] = await Promise.all([
-        fetch("/api/admin/payments/withdrawals"),
-        fetch("/api/admin/payments/transactions")
-      ]);
+      const response = await fetch("/api/admin/payments");
 
-      if (withdrawalResponse.ok) {
-        const withdrawalData = await withdrawalResponse.json();
-        setWithdrawalRequests(withdrawalData.requests);
-      }
-
-      if (transactionResponse.ok) {
-        const transactionData = await transactionResponse.json();
-        setTransactions(transactionData.transactions);
+      if (response.ok) {
+        const data = await response.json();
+        setTransactions(data.transactions);
+      } else {
+        console.error('Failed to load payment data');
+        setTransactions([]);
       }
     } catch (error) {
       console.error("Failed to load payment data:", error);
@@ -80,34 +59,35 @@ export default function AdminPaymentsPage() {
     }
   };
 
-  const handleWithdrawalAction = async (requestId: string, action: "approve" | "reject") => {
+  const handlePaymentAction = async (transactionId: string, action: "approve" | "reject") => {
     try {
-      const response = await fetch(`/api/admin/payments/withdrawals/${requestId}`, {
-        method: "PATCH",
+      const response = await fetch(`/api/admin/confirm-payment`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ action }),
+        body: JSON.stringify({ 
+          transactionId,
+          action: action === "approve" ? "confirm" : "reject",
+          adminNotes: action === "approve" ? "Payment approved by admin" : "Payment rejected by admin"
+        }),
       });
 
       if (response.ok) {
         loadPaymentData(); // Reload data
-        alert(`Withdrawal ${action}ed successfully`);
+        alert(`Payment ${action}d successfully`);
       } else {
         const error = await response.json();
-        alert(error.error || `Failed to ${action} withdrawal`);
+        alert(error.error || `Failed to ${action} payment`);
       }
     } catch (error) {
       alert(`Network error. Please try again.`);
     }
   };
 
-  const filteredWithdrawals = withdrawalRequests.filter(request => 
-    filterStatus === "all" || request.status === filterStatus.toUpperCase()
-  );
 
   const filteredTransactions = transactions.filter(transaction => 
-    filterType === "all" || transaction.type === filterType.toUpperCase()
+    filterStatus === "all" || transaction.status === filterStatus.toUpperCase()
   );
 
   if (status === "loading" || isLoading) {
@@ -128,10 +108,10 @@ export default function AdminPaymentsPage() {
         {/* Page Header */}
         <div className="mb-6">
           <h2 className="text-title-md2 font-bold text-black dark:text-white">
-            Withdrawal Management (Superadmin Only)
+            Payment Approvals (Superadmin Only)
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-            Approve or reject withdrawal requests - Superadmin access only
+            Approve or reject token purchase payments - Superadmin access only
           </p>
         </div>
 
@@ -141,10 +121,10 @@ export default function AdminPaymentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Pending Withdrawals
+                  Pending Payments
                 </p>
                 <p className="text-2xl font-bold text-black dark:text-white">
-                  {withdrawalRequests.filter(r => r.status === "PENDING").length}
+                  {transactions.filter(t => t.status === "PENDING").length}
                 </p>
               </div>
               <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
@@ -177,10 +157,10 @@ export default function AdminPaymentsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Total Withdrawals
+                  Approved Payments
                 </p>
                 <p className="text-2xl font-bold text-black dark:text-white">
-                  {withdrawalRequests.length}
+                  {transactions.filter(t => t.status === "COMPLETED").length}
                 </p>
               </div>
               <div className="p-3 bg-green-100 dark:bg-green-900 rounded-full">
@@ -198,9 +178,9 @@ export default function AdminPaymentsPage() {
                   Pending Amount
                 </p>
                 <p className="text-2xl font-bold text-black dark:text-white">
-                  ${withdrawalRequests
-                    .filter(r => r.status === "PENDING")
-                    .reduce((sum, r) => sum + r.amount, 0)
+                  ${transactions
+                    .filter(t => t.status === "PENDING")
+                    .reduce((sum, t) => sum + t.amount, 0)
                     .toFixed(2)}
                 </p>
               </div>
@@ -213,11 +193,11 @@ export default function AdminPaymentsPage() {
           </div>
         </div>
 
-        {/* Withdrawal Requests */}
+        {/* Payment Approvals */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-medium text-black dark:text-white">
-              Withdrawal Requests
+              Payment Approvals
             </h3>
             <select
               value={filterStatus}
@@ -226,9 +206,8 @@ export default function AdminPaymentsPage() {
             >
               <option value="all">All Status</option>
               <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
+              <option value="completed">Completed</option>
               <option value="rejected">Rejected</option>
-              <option value="processing">Processing</option>
             </select>
           </div>
 
@@ -241,13 +220,13 @@ export default function AdminPaymentsPage() {
                       User
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Amount
+                      Amount (USD)
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Network
+                      Tokens
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Address
+                      Payment Method
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
@@ -261,133 +240,7 @@ export default function AdminPaymentsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white dark:bg-box-dark divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredWithdrawals.map((request) => (
-                    <tr key={request.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm">
-                          <div className="font-medium text-gray-900 dark:text-white">
-                            {request.userName}
-                          </div>
-                          <div className="text-gray-500 dark:text-gray-400">
-                            {request.userEmail}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        ${request.amount.toFixed(2)}
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          Fee: ${request.fee.toFixed(2)}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white capitalize">
-                        {request.network}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {request.address.substring(0, 8)}...{request.address.substring(request.address.length - 6)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          request.status === "APPROVED" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" :
-                          request.status === "PENDING" ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" :
-                          request.status === "REJECTED" ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" :
-                          "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
-                        }`}>
-                          {request.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(request.createdAt).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {request.status === "PENDING" && (
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleWithdrawalAction(request.id, "approve")}
-                              className="text-green-600 hover:text-green-800"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleWithdrawalAction(request.id, "reject")}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              Reject
-                            </button>
-                          </div>
-                        )}
-                        {request.status === "APPROVED" && (
-                          <span className="text-green-600">Approved</span>
-                        )}
-                        {request.status === "REJECTED" && (
-                          <span className="text-red-600">Rejected</span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {filteredWithdrawals.length === 0 && (
-              <div className="text-center py-12">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No withdrawal requests found</h3>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  {filterStatus === "all" ? "No withdrawal requests yet." : `No ${filterStatus} withdrawal requests.`}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Recent Transactions */}
-        <div>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-medium text-black dark:text-white">
-              Recent Transactions
-            </h3>
-            <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="all">All Types</option>
-              <option value="purchase">Purchase</option>
-              <option value="withdrawal">Withdrawal</option>
-              <option value="stake">Stake</option>
-              <option value="unstake">Unstake</option>
-            </select>
-          </div>
-
-          <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-stroke-dark dark:bg-box-dark">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-800">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      User
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Tokens
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-box-dark divide-y divide-gray-200 dark:divide-gray-700">
-                  {filteredTransactions.slice(0, 20).map((transaction) => (
+                  {filteredTransactions.map((transaction) => (
                     <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm">
@@ -399,26 +252,51 @@ export default function AdminPaymentsPage() {
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white capitalize">
-                        {transaction.type}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                         ${transaction.amount.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        {transaction.tokenAmount.toFixed(2)}
+                        {transaction.tokenAmount.toFixed(2)} DIT
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white capitalize">
+                        {transaction.paymentMethod || 'Unknown'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           transaction.status === "COMPLETED" ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" :
                           transaction.status === "PENDING" ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200" :
-                          "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                          transaction.status === "REJECTED" ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" :
+                          "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
                         }`}>
                           {transaction.status}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {new Date(transaction.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        {transaction.status === "PENDING" && (
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => handlePaymentAction(transaction.id, "approve")}
+                              className="text-green-600 hover:text-green-800"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handlePaymentAction(transaction.id, "reject")}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                        {transaction.status === "COMPLETED" && (
+                          <span className="text-green-600">Approved</span>
+                        )}
+                        {transaction.status === "REJECTED" && (
+                          <span className="text-red-600">Rejected</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -431,14 +309,15 @@ export default function AdminPaymentsPage() {
                 <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No transactions found</h3>
+                <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No payment requests found</h3>
                 <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                  {filterType === "all" ? "No transactions yet." : `No ${filterType} transactions.`}
+                  {filterStatus === "all" ? "No payment requests yet." : `No ${filterStatus} payment requests.`}
                 </p>
               </div>
             )}
           </div>
         </div>
+
       </div>
     </div>
   );

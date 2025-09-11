@@ -40,11 +40,12 @@ export default function WithdrawalWalletPage() {
   });
   const [withdrawForm, setWithdrawForm] = useState({
     walletId: "",
-    amount: "",
+    tokenAmount: "",
     network: "ethereum",
   });
   const [message, setMessage] = useState("");
   const [userStatus, setUserStatus] = useState({ isActive: true, availableTokens: 0 });
+  const [currentTokenPrice, setCurrentTokenPrice] = useState(2.80);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -78,6 +79,13 @@ export default function WithdrawalWalletPage() {
           availableTokens: 0
         });
         // Don't show duplicate message - already shown in UI
+      }
+
+      // Load current token price
+      const priceResponse = await fetch("/api/tokens/current-price");
+      if (priceResponse.ok) {
+        const priceData = await priceResponse.json();
+        setCurrentTokenPrice(priceData.price || 2.80);
       }
       
       // Load withdrawal data
@@ -141,15 +149,22 @@ export default function WithdrawalWalletPage() {
   };
 
   const handleWithdraw = async () => {
-    if (!withdrawForm.walletId || !withdrawForm.amount) {
+    if (!withdrawForm.walletId || !withdrawForm.tokenAmount) {
       setMessage("Please fill in all fields");
       setTimeout(() => setMessage(""), 5000);
       return;
     }
 
-    const amount = parseFloat(withdrawForm.amount);
-    if (amount <= 0) {
-      setMessage("Amount must be greater than 0");
+    const tokenAmount = parseFloat(withdrawForm.tokenAmount);
+    if (tokenAmount <= 0) {
+      setMessage("Token amount must be greater than 0");
+      setTimeout(() => setMessage(""), 5000);
+      return;
+    }
+
+    // Check if user has sufficient available tokens
+    if (tokenAmount > userStatus.availableTokens) {
+      setMessage(`Insufficient available tokens. You have ${userStatus.availableTokens.toFixed(2)} DIT tokens available for withdrawal.`);
       setTimeout(() => setMessage(""), 5000);
       return;
     }
@@ -169,7 +184,7 @@ export default function WithdrawalWalletPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          amount: amount,
+          tokenAmount: tokenAmount, // Send DIT tokens
           network: withdrawForm.network,
           walletAddress: withdrawalWallets.find(w => w.id === withdrawForm.walletId)?.address,
         }),
@@ -178,9 +193,10 @@ export default function WithdrawalWalletPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage("Withdrawal request submitted successfully");
+        const usdValue = (tokenAmount * currentTokenPrice).toFixed(2);
+        setMessage(`Withdrawal request submitted successfully! ${tokenAmount.toFixed(2)} DIT tokens ($${usdValue}) will be processed after admin approval.`);
         setShowWithdraw(false);
-        setWithdrawForm({ walletId: "", amount: "", network: "usdt" });
+        setWithdrawForm({ walletId: "", tokenAmount: "", network: "ethereum" });
         loadWithdrawalData();
         setTimeout(() => setMessage(""), 5000);
       } else {
@@ -579,19 +595,38 @@ export default function WithdrawalWalletPage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Amount (DIT)
+                  Amount (DIT Tokens)
                 </label>
                 <input
                   type="number"
                   step="0.01"
-                  value={withdrawForm.amount}
-                  onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
+                  value={withdrawForm.tokenAmount}
+                  onChange={(e) => setWithdrawForm({ ...withdrawForm, tokenAmount: e.target.value })}
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-                  placeholder="Enter amount"
+                  placeholder="Enter DIT token amount"
                 />
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Available: {userStatus.availableTokens.toFixed(2)} DIT
-                </p>
+                <div className="mt-1 space-y-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    Available: {userStatus.availableTokens.toFixed(2)} DIT tokens
+                  </p>
+                  {withdrawForm.tokenAmount && (
+                    <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                      USD Value: ${(parseFloat(withdrawForm.tokenAmount) * currentTokenPrice).toFixed(2)}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-md">
+                <h4 className="text-sm font-medium text-green-900 dark:text-green-100 mb-2">
+                  ✅ Withdrawal Information
+                </h4>
+                <div className="text-xs text-green-800 dark:text-green-200 space-y-1">
+                  <p>• Regular withdrawals have no lock period</p>
+                  <p>• Only available tokens can be withdrawn (staked tokens are locked separately)</p>
+                  <p>• Withdrawals are processed after admin approval</p>
+                  <p>• Processing time: 1-3 business days after approval</p>
+                </div>
               </div>
 
               <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-md">

@@ -190,12 +190,12 @@ export default function DepositWalletPage() {
             <li><strong>Wait for 3 blockchain confirmations</strong> (usually 5-10 minutes)</li>
             <li><strong>Our admin team will verify your transaction</strong></li>
             <li><strong>DIT tokens will be manually credited to your DiTokens account</strong></li>
-            <li>You'll receive an email confirmation when processing is complete</li>
+            <li>You&apos;ll receive an email confirmation when processing is complete</li>
           </ol>
           <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
               <strong>⚠️ Important:</strong> Send USDT TO the DiTokens company wallet address above. 
-              Do NOT send to your own wallet address - that won't work!
+              Do NOT send to your own wallet address - that won&apos;t work!
             </p>
           </div>
           
@@ -205,9 +205,9 @@ export default function DepositWalletPage() {
             </h5>
             <p className="text-sm text-green-800 dark:text-green-200">
               When you send USDT to our company wallet, our admin team will verify your transaction 
-              and manually process your deposit. We'll calculate how many DIT tokens you should receive 
+              and manually process your deposit. We&apos;ll calculate how many DIT tokens you should receive 
               based on the current price and credit them to your DiTokens account. Processing typically 
-              takes 1-24 hours during business days. You'll receive an email confirmation once processing is complete.
+              takes 1-24 hours during business days. You&apos;ll receive an email confirmation once processing is complete.
             </p>
           </div>
         </div>

@@ -34,6 +34,7 @@ export default function TokenOverviewPage() {
   const [priceData, setPriceData] = useState<PriceData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState("7d");
+  const [databaseError, setDatabaseError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -47,11 +48,20 @@ export default function TokenOverviewPage() {
 
   const loadTokenData = async () => {
     try {
+      setDatabaseError(null); // Reset error state
+      
       // Load token statistics
       const statsResponse = await fetch("/api/tokens/stats");
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         setTokenStats(statsData);
+      } else if (statsResponse.status === 503) {
+        // Database error - check if it's a database connection issue
+        const errorData = await statsResponse.json();
+        if (errorData.type === 'database_error') {
+          setDatabaseError(errorData.error);
+          return;
+        }
       }
 
       // Load price data
@@ -71,6 +81,13 @@ export default function TokenOverviewPage() {
         });
         
         setPriceData(filteredData);
+      } else if (priceResponse.status === 503) {
+        // Database error - check if it's a database connection issue
+        const errorData = await priceResponse.json();
+        if (errorData.type === 'database_error') {
+          setDatabaseError(errorData.error);
+          return;
+        }
       } else {
         console.error("Failed to fetch price data:", priceResponse.status);
         const errorText = await priceResponse.text();
@@ -111,6 +128,64 @@ export default function TokenOverviewPage() {
 
   if (!session) {
     return null;
+  }
+
+  // Show database error page if there's a database connection issue
+  if (databaseError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+            <div className="w-8 h-8 text-red-600 text-2xl">⚠️</div>
+          </div>
+          
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Database Connection Issue
+            </h2>
+            
+            <p className="text-gray-600 mb-6">
+              {databaseError}
+            </p>
+            
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setDatabaseError(null);
+                  setIsLoading(true);
+                  loadTokenData();
+                }}
+                className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                <div className="w-4 h-4 mr-2">🔄</div>
+                Try Again
+              </button>
+              
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Refresh Page
+              </button>
+            </div>
+            
+            <div className="mt-6 p-3 bg-yellow-50 rounded-md">
+              <div className="flex items-start">
+                <div className="w-5 h-5 text-yellow-600 mt-0.5 mr-2">⚠️</div>
+                <div className="text-sm text-yellow-800">
+                  <p className="font-medium">What you can do:</p>
+                  <ul className="mt-1 list-disc list-inside space-y-1">
+                    <li>Wait a moment and try again</li>
+                    <li>Check your internet connection</li>
+                    <li>Contact support if the issue persists</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

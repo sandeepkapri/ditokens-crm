@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Status Change - Admin Notification</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header { background: {{headerColor}}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; margin: -20px -20px 20px -20px; }
+        .content { padding: 0; }
+        .info-box { background: {{infoBoxColor}}; border-left: 4px solid {{borderColor}}; padding: 15px; margin: 20px 0; border-radius: 0 4px 4px 0; }
+        .user-details { background: #f1f5f9; padding: 15px; border-radius: 6px; margin: 15px 0; }
+        .detail-row { display: flex; justify-content: space-between; margin: 8px 0; padding: 5px 0; border-bottom: 1px solid #e2e8f0; }
+        .detail-label { font-weight: bold; color: #475569; }
+        .detail-value { color: #1e293b; }
+        .status-change { background: {{statusBoxColor}}; border: 1px solid {{borderColor}}; padding: 15px; border-radius: 6px; margin: 20px 0; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; color: #64748b; font-size: 14px; }
+        .btn { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; }
+        .btn:hover { background: #1d4ed8; }
+        .alert { background: #fef2f2; border: 1px solid #fca5a5; color: #dc2626; padding: 12px; border-radius: 6px; margin: 15px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>{{statusIcon}} Account {{action}}</h1>
+            <p>Admin Notification - DiTokens CRM</p>
+        </div>
+        
+        <div class="content">
+            <div class="info-box">
+                <h3>{{statusTitle}}</h3>
+                <p>{{statusDescription}}</p>
+            </div>
+
+            <div class="user-details">
+                <h3>👤 User Information</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Name:</span>
+                    <span class="detail-value">{{userName}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email:</span>
+                    <span class="detail-value">{{userEmail}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">User ID:</span>
+                    <span class="detail-value">{{userId}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Previous Status:</span>
+                    <span class="detail-value">{{oldStatus}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">New Status:</span>
+                    <span class="detail-value">{{newStatus}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Changed By:</span>
+                    <span class="detail-value">{{changedBy}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Change Time:</span>
+                    <span class="detail-value">{{changeTime}}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Reason:</span>
+                    <span class="detail-value">{{reason}}</span>
+                </div>
+            </div>
+
+            <div class="status-change">
+                <h3>{{actionTitle}}</h3>
+                <p><strong>Account Status:</strong> {{oldStatus}} → {{newStatus}}</p>
+                <p><strong>Impact:</strong> {{impactDescription}}</p>
+                {{#if emailSent}}
+                <p><strong>User Notification:</strong> User has been notified of this change via email</p>
+                {{/if}}
+            </div>
+
+            {{#if requiresAttention}}
+            <div class="alert">
+                <strong>Attention Required:</strong> {{attentionMessage}}
+            </div>
+            {{/if}}
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{adminDashboardUrl}}/users/{{userId}}" class="btn">View User Profile</a>
+                <a href="{{adminDashboardUrl}}/users" class="btn">View All Users</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated notification from DiTokens CRM System</p>
+            <p>User ID: {{userId}} | Changed at: {{changeTime}}</p>
+        </div>
+    </div>
+</body>
+</html>

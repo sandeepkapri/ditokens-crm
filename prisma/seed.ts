@@ -46,6 +46,31 @@ async function main() {
 
   console.log('👑 Created superadmin user:', superadmin.email);
 
+  // Create contact superadmin user
+  const contactSuperadminPassword = await bcrypt.hash('contact123', 12);
+  const contactSuperadmin = await prisma.user.create({
+    data: {
+      name: 'Ditokens Contact Superadmin',
+      email: 'contact@ditokens.com',
+      password: contactSuperadminPassword,
+      contactNumber: '+1 (555) 987-6543',
+      country: 'United States',
+      state: 'New York',
+      role: 'SUPERADMIN',
+      isActive: true,
+      emailVerified: true,
+      referralCode: 'CONTACT001',
+      totalTokens: 1000000,
+      stakedTokens: 500000,
+      availableTokens: 500000,
+      totalEarnings: 25000,
+      referralEarnings: 5000,
+      profilePicture: null,
+    },
+  });
+
+  console.log('👑 Created contact superadmin user:', contactSuperadmin.email);
+
   // Create admin user
   const adminPassword = await bcrypt.hash('admin123', 12);
   const admin = await prisma.user.create({

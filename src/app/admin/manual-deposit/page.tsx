@@ -209,7 +209,7 @@ export default function ManualDepositPage() {
               <li>User sends USDT to DiTokens company wallet</li>
               <li>Admin verifies the transaction on Etherscan</li>
               <li>Admin enters details here to process the deposit</li>
-              <li>System automatically credits DIT tokens to user's account</li>
+              <li>System automatically credits DIT tokens to user&apos;s account</li>
               <li>User and admin receive email notifications</li>
             </ol>
           </div>

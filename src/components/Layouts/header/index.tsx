@@ -10,14 +10,15 @@ import { MenuIcon } from "./icons";
 import { Notification } from "./notification";
 import { ThemeToggleSwitch } from "./theme-toggle";
 import { UserInfo } from "./user-info";
+import { isAdminUser, isSuperAdminUser } from "@/lib/admin-auth";
 
 export function Header() {
   const { toggleSidebar, isMobile } = useSidebarContext();
   const pathname = usePathname();
   const { data: session } = useSession();
 
-  const isAdmin = session?.user?.email === "admin@ditokens.com";
-  const isSuperAdmin = session?.user?.email === "superadmin@ditokens.com";
+  const isAdmin = isAdminUser(session);
+  const isSuperAdmin = isSuperAdminUser(session);
   const isAdminRoute = pathname.startsWith("/admin");
 
   // Get page title based on current route

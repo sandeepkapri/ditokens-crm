@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { isAdminUser } from "@/lib/admin-auth";
+import { isSuperAdminUser } from "@/lib/admin-auth";
 import { z } from "zod";
 import { NotificationHelpers } from "@/lib/notifications";
-import { sendPurchaseConfirmation } from "@/lib/email-events";
+import { sendPurchaseConfirmation, sendPaymentConfirmationAdmin, sendPaymentRejectionAdmin } from "@/lib/email-events";
 
 const confirmPaymentSchema = z.object({
   transactionId: z.string(),
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
-    if (!session?.user?.email || !isAdminUser(session)) {
+    if (!session?.user?.email || !isSuperAdminUser(session)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -120,18 +120,38 @@ export async function POST(request: NextRequest) {
         transaction.amount
       );
 
-      // Send confirmation email
+      // Send confirmation email to user
       try {
         await sendPurchaseConfirmation(transaction.userId, {
           email: transaction.user.email,
-          name: transaction.user.name || "User"
-        }, {
-          amount: transaction.amount,
-          tokenAmount: transaction.tokenAmount,
-          transactionId: transaction.id
+          name: transaction.user.name || "User",
+          tokens: transaction.tokenAmount.toString(),
+          amount: transaction.amount.toString(),
+          transactionId: transaction.id,
+          paymentMethod: transaction.paymentMethod || "Unknown",
+          tokenPrice: transaction.pricePerToken.toString(),
+          processingFee: (transaction.processingFee || 0).toString(),
+          currentValue: transaction.amount.toString()
         });
+        console.log(`Purchase confirmation email sent to user: ${transaction.user.email}`);
       } catch (emailError) {
         console.error('Failed to send purchase confirmation email:', emailError);
+      }
+
+      // Send admin notification
+      try {
+        await sendPaymentConfirmationAdmin({
+          userName: transaction.user.name || "User",
+          userEmail: transaction.user.email,
+          amount: transaction.amount.toString(),
+          tokenAmount: transaction.tokenAmount.toString(),
+          transactionId: transaction.id,
+          paymentMethod: transaction.paymentMethod || "Unknown",
+          adminNotes: adminNotes || "Payment confirmed by admin"
+        });
+        console.log(`Payment confirmation admin notification sent`);
+      } catch (adminEmailError) {
+        console.error('Failed to send payment confirmation admin notification:', adminEmailError);
       }
 
       return NextResponse.json({
@@ -158,6 +178,22 @@ export async function POST(request: NextRequest) {
         transaction.amount,
         adminNotes || "Payment was rejected"
       );
+
+      // Send admin notification for rejection
+      try {
+        await sendPaymentRejectionAdmin({
+          userName: transaction.user.name || "User",
+          userEmail: transaction.user.email,
+          amount: transaction.amount.toString(),
+          tokenAmount: transaction.tokenAmount.toString(),
+          transactionId: transaction.id,
+          paymentMethod: transaction.paymentMethod || "Unknown",
+          adminNotes: adminNotes || "Payment rejected by admin"
+        });
+        console.log(`Payment rejection admin notification sent`);
+      } catch (adminEmailError) {
+        console.error('Failed to send payment rejection admin notification:', adminEmailError);
+      }
 
       return NextResponse.json({
         message: "Payment rejected",

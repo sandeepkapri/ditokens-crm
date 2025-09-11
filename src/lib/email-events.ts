@@ -40,34 +40,24 @@ export class EmailEventManager {
     loginData: { ipAddress: string; userAgent: string; timestamp: Date }
   ) {
     try {
-      // Get user's login preferences
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        select: { emailNotifications: true }
-      });
-
-      // Only send if user has email notifications enabled
-      if (user?.emailNotifications?.loginNotifications !== false) {
-        const loginTime = loginData.timestamp.toLocaleString();
-        const deviceInfo = this.extractDeviceInfo(loginData.userAgent);
-        
-        const success = await emailService.sendLoginNotification(
-          userData.email,
-          userData.name,
-          loginTime,
-          loginData.ipAddress
-        );
-        
-        if (success) {
-          console.log(`Login notification sent to ${userData.email}`);
-        } else {
-          console.error(`Failed to send login notification to ${userData.email}`);
-        }
-        
-        return success;
+      // Send login notification (simplified - no preference check for now)
+      const loginTime = loginData.timestamp.toLocaleString();
+      const deviceInfo = this.extractDeviceInfo(loginData.userAgent);
+      
+      const success = await emailService.sendLoginNotification(
+        userData.email,
+        userData.name,
+        loginTime,
+        loginData.ipAddress
+      );
+      
+      if (success) {
+        console.log(`Login notification sent to ${userData.email}`);
+      } else {
+        console.error(`Failed to send login notification to ${userData.email}`);
       }
       
-      return true; // User has notifications disabled
+      return success;
     } catch (error) {
       console.error('Error sending login notification:', error);
       return false;
@@ -133,7 +123,12 @@ export class EmailEventManager {
         purchaseData.email,
         purchaseData.name,
         purchaseData.tokens,
-        purchaseData.amount
+        purchaseData.amount,
+        purchaseData.transactionId,
+        purchaseData.paymentMethod,
+        purchaseData.tokenPrice,
+        purchaseData.processingFee,
+        purchaseData.currentValue
       );
       
       if (success) {
@@ -323,7 +318,7 @@ export class EmailEventManager {
       }
 
       // Send email to admins
-      const adminSuccess = await this.handlePurchasePendingAdmin({
+      const adminSuccess = await EmailEventManager.handlePurchasePendingAdmin({
         userId,
         userEmail: userData.email,
         userName: userData.name,
@@ -511,12 +506,11 @@ export class EmailEventManager {
     try {
       const users = await prisma.user.findMany({
         where: { id: { in: userIds } },
-        select: { id: true, email: true, name: true, emailNotifications: true }
+        select: { id: true, email: true, name: true }
       });
 
       const results = await Promise.allSettled(
         users
-          .filter(user => user.emailNotifications?.generalNotifications !== false)
           .map(user => 
             this.handleNotification(user.id, {
               ...notificationData,
@@ -555,6 +549,292 @@ export class EmailEventManager {
   }
 
   /**
+   * Handle withdrawal approved notification for user
+   */
+  static async handleWithdrawalApproved(
+    userId: string,
+    withdrawalData: {
+      email: string;
+      name: string;
+      amount: string;
+      network: string;
+      walletAddress: string;
+      transactionId: string;
+      processingTime: string;
+    }
+  ) {
+    try {
+      const success = await emailService.sendWithdrawalApproved(
+        withdrawalData.email,
+        withdrawalData.name,
+        withdrawalData.amount,
+        withdrawalData.network,
+        withdrawalData.walletAddress,
+        withdrawalData.transactionId,
+        withdrawalData.processingTime
+      );
+      
+      if (success) {
+        console.log(`Withdrawal approved email sent to ${withdrawalData.email}`);
+      } else {
+        console.error(`Failed to send withdrawal approved email to ${withdrawalData.email}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error sending withdrawal approved email:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle withdrawal rejected notification for user
+   */
+  static async handleWithdrawalRejected(
+    userId: string,
+    withdrawalData: {
+      email: string;
+      name: string;
+      amount: string;
+      network: string;
+      walletAddress: string;
+      transactionId: string;
+      reason: string;
+      supportContact: string;
+    }
+  ) {
+    try {
+      const success = await emailService.sendWithdrawalRejected(
+        withdrawalData.email,
+        withdrawalData.name,
+        withdrawalData.amount,
+        withdrawalData.network,
+        withdrawalData.walletAddress,
+        withdrawalData.transactionId,
+        withdrawalData.reason,
+        withdrawalData.supportContact
+      );
+      
+      if (success) {
+        console.log(`Withdrawal rejected email sent to ${withdrawalData.email}`);
+      } else {
+        console.error(`Failed to send withdrawal rejected email to ${withdrawalData.email}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error sending withdrawal rejected email:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle withdrawal processing notification for admin
+   */
+  static async handleWithdrawalProcessingAdmin(
+    adminData: {
+      userName: string;
+      userEmail: string;
+      userId: string;
+      amount: string;
+      network: string;
+      walletAddress: string;
+      transactionId: string;
+      action: string;
+      adminNotes?: string;
+    }
+  ) {
+    try {
+      // Get admin emails from environment
+      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || [];
+      
+      if (adminEmails.length === 0) {
+        console.warn('No admin emails configured for withdrawal processing notifications');
+        return false;
+      }
+
+      const results = await Promise.allSettled(
+        adminEmails.map(adminEmail => 
+          emailService.sendWithdrawalProcessingAdmin(
+            adminEmail,
+            adminData.userName,
+            adminData.userEmail,
+            adminData.amount,
+            adminData.network,
+            adminData.walletAddress,
+            adminData.transactionId,
+            adminData.action,
+            adminData.adminNotes,
+            adminData.userId
+          )
+        )
+      );
+
+      const successful = results.filter(result => result.status === 'fulfilled' && result.value).length;
+      const failed = results.length - successful;
+
+      console.log(`Withdrawal processing admin emails: ${successful} sent, ${failed} failed`);
+      
+      return { successful, failed, total: results.length };
+    } catch (error) {
+      console.error('Error sending withdrawal processing admin notifications:', error);
+      return { successful: 0, failed: 0, total: 0 };
+    }
+  }
+
+  /**
+   * Handle user registration notification for admin
+   */
+  static async handleUserRegistrationAdmin(
+    userData: {
+      userName: string;
+      userEmail: string;
+      contactNumber: string;
+      country: string;
+      state: string;
+      referralCode: string;
+      referredBy?: string;
+      registrationTime: string;
+    }
+  ) {
+    try {
+      // Get admin emails from environment
+      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || [];
+      
+      if (adminEmails.length === 0) {
+        console.warn('No admin emails configured for user registration notifications');
+        return false;
+      }
+
+      const results = await Promise.allSettled(
+        adminEmails.map(adminEmail => 
+          emailService.sendUserRegistrationAdmin(
+            adminEmail,
+            userData.userName,
+            userData.userEmail,
+            userData.contactNumber,
+            userData.country,
+            userData.state,
+            userData.referralCode,
+            userData.referredBy || '',
+            userData.registrationTime
+          )
+        )
+      );
+
+      const successful = results.filter(result => result.status === 'fulfilled' && result.value).length;
+      const failed = results.length - successful;
+
+      console.log(`User registration admin emails: ${successful} sent, ${failed} failed`);
+      
+      return { successful, failed, total: results.length };
+    } catch (error) {
+      console.error('Error sending user registration admin notifications:', error);
+      return { successful: 0, failed: 0, total: 0 };
+    }
+  }
+
+  /**
+   * Handle payment confirmation notification for admin
+   */
+  static async handlePaymentConfirmationAdmin(
+    paymentData: {
+      userName: string;
+      userEmail: string;
+      amount: string;
+      tokenAmount: string;
+      transactionId: string;
+      paymentMethod: string;
+      adminNotes?: string;
+    }
+  ) {
+    try {
+      // Get admin emails from environment
+      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || [];
+      
+      if (adminEmails.length === 0) {
+        console.warn('No admin emails configured for payment confirmation notifications');
+        return false;
+      }
+
+      const results = await Promise.allSettled(
+        adminEmails.map(adminEmail => 
+          emailService.sendPaymentConfirmationAdmin(
+            adminEmail,
+            paymentData.userName,
+            paymentData.userEmail,
+            paymentData.amount,
+            paymentData.tokenAmount,
+            paymentData.transactionId,
+            paymentData.paymentMethod,
+            paymentData.adminNotes
+          )
+        )
+      );
+
+      const successful = results.filter(result => result.status === 'fulfilled' && result.value).length;
+      const failed = results.length - successful;
+
+      console.log(`Payment confirmation admin emails: ${successful} sent, ${failed} failed`);
+      
+      return { successful, failed, total: results.length };
+    } catch (error) {
+      console.error('Error sending payment confirmation admin notifications:', error);
+      return { successful: 0, failed: 0, total: 0 };
+    }
+  }
+
+  /**
+   * Handle payment rejection notification for admin
+   */
+  static async handlePaymentRejectionAdmin(
+    paymentData: {
+      userName: string;
+      userEmail: string;
+      amount: string;
+      tokenAmount: string;
+      transactionId: string;
+      paymentMethod: string;
+      adminNotes?: string;
+    }
+  ) {
+    try {
+      // Get admin emails from environment
+      const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(email => email.trim()) || [];
+      
+      if (adminEmails.length === 0) {
+        console.warn('No admin emails configured for payment rejection notifications');
+        return false;
+      }
+
+      const results = await Promise.allSettled(
+        adminEmails.map(adminEmail => 
+          emailService.sendPaymentRejectionAdmin(
+            adminEmail,
+            paymentData.userName,
+            paymentData.userEmail,
+            paymentData.amount,
+            paymentData.tokenAmount,
+            paymentData.transactionId,
+            paymentData.paymentMethod,
+            paymentData.adminNotes
+          )
+        )
+      );
+
+      const successful = results.filter(result => result.status === 'fulfilled' && result.value).length;
+      const failed = results.length - successful;
+
+      console.log(`Payment rejection admin emails: ${successful} sent, ${failed} failed`);
+      
+      return { successful, failed, total: results.length };
+    } catch (error) {
+      console.error('Error sending payment rejection admin notifications:', error);
+      return { successful: 0, failed: 0, total: 0 };
+    }
+  }
+
+  /**
    * Test email service connection
    */
   static async testEmailService(): Promise<boolean> {
@@ -576,6 +856,12 @@ export const sendStakeConfirmation = EmailEventManager.handleStakeConfirmation;
 export const sendPasswordReset = EmailEventManager.handlePasswordReset;
 export const sendWithdrawalRequest = EmailEventManager.handleWithdrawalRequest;
 export const sendWithdrawalRequestAdmin = EmailEventManager.handleWithdrawalRequestAdmin;
+export const sendWithdrawalApproved = EmailEventManager.handleWithdrawalApproved;
+export const sendWithdrawalRejected = EmailEventManager.handleWithdrawalRejected;
+export const sendWithdrawalProcessingAdmin = EmailEventManager.handleWithdrawalProcessingAdmin;
+export const sendUserRegistrationAdmin = EmailEventManager.handleUserRegistrationAdmin;
+export const sendPaymentConfirmationAdmin = EmailEventManager.handlePaymentConfirmationAdmin;
+export const sendPaymentRejectionAdmin = EmailEventManager.handlePaymentRejectionAdmin;
 export const sendAccountActivated = EmailEventManager.handleAccountActivated;
 export const sendPurchasePending = EmailEventManager.handlePurchasePending;
 export const sendPurchasePendingAdmin = EmailEventManager.handlePurchasePendingAdmin;

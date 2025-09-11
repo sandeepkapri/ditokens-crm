@@ -41,6 +41,7 @@ export default function Dashboard() {
   const [tokenPrices, setTokenPrices] = useState<TokenPrice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPrice, setCurrentPrice] = useState(2.80);
+  const [databaseError, setDatabaseError] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -55,28 +56,51 @@ export default function Dashboard() {
 
   const loadDashboardData = async () => {
     try {
+      setDatabaseError(null); // Reset error state
+      
       const [portfolioResponse, withdrawalsResponse, pricesResponse] = await Promise.all([
         fetch("/api/tokens/portfolio"),
         fetch("/api/tokens/withdrawals"),
         fetch("/api/tokens/price")
       ]);
 
+      // Check for database errors in portfolio response
       if (portfolioResponse.ok) {
         const portfolioData = await portfolioResponse.json();
         setUserStats(portfolioData.stats);
+      } else if (portfolioResponse.status === 503) {
+        const errorData = await portfolioResponse.json();
+        if (errorData.type === 'database_error') {
+          setDatabaseError(errorData.error);
+          return;
+        }
       }
 
+      // Check for database errors in withdrawals response
       if (withdrawalsResponse.ok) {
         const withdrawalsData = await withdrawalsResponse.json();
         setWithdrawalRequests(withdrawalsData.withdrawals || []);
+      } else if (withdrawalsResponse.status === 503) {
+        const errorData = await withdrawalsResponse.json();
+        if (errorData.type === 'database_error') {
+          setDatabaseError(errorData.error);
+          return;
+        }
       }
 
+      // Check for database errors in prices response
       if (pricesResponse.ok) {
         const pricesData = await pricesResponse.json();
         console.log('Price API response:', pricesData);
         setTokenPrices(pricesData.priceData || []);
         if (pricesData.priceData && pricesData.priceData.length > 0) {
           setCurrentPrice(pricesData.priceData[0].price);
+        }
+      } else if (pricesResponse.status === 503) {
+        const errorData = await pricesResponse.json();
+        if (errorData.type === 'database_error') {
+          setDatabaseError(errorData.error);
+          return;
         }
       }
     } catch (error) {
@@ -128,6 +152,64 @@ export default function Dashboard() {
 
   if (!session) {
     return null;
+  }
+
+  // Show database error page if there's a database connection issue
+  if (databaseError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full">
+            <div className="w-8 h-8 text-red-600 text-2xl">⚠️</div>
+          </div>
+          
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
+              Database Connection Issue
+            </h2>
+            
+            <p className="text-gray-600 mb-6">
+              {databaseError}
+            </p>
+            
+            <div className="space-y-3">
+              <button
+                onClick={() => {
+                  setDatabaseError(null);
+                  setIsLoading(true);
+                  loadDashboardData();
+                }}
+                className="w-full flex items-center justify-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              >
+                <div className="w-4 h-4 mr-2">🔄</div>
+                Try Again
+              </button>
+              
+              <button
+                onClick={() => window.location.reload()}
+                className="w-full px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Refresh Page
+              </button>
+            </div>
+            
+            <div className="mt-6 p-3 bg-yellow-50 rounded-md">
+              <div className="flex items-start">
+                <div className="w-5 h-5 text-yellow-600 mt-0.5 mr-2">⚠️</div>
+                <div className="text-sm text-yellow-800">
+                  <p className="font-medium">What you can do:</p>
+                  <ul className="mt-1 list-disc list-inside space-y-1">
+                    <li>Wait a moment and try again</li>
+                    <li>Check your internet connection</li>
+                    <li>Contact support if the issue persists</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   const totalValue = (userStats?.totalTokens || 0) * currentPrice;

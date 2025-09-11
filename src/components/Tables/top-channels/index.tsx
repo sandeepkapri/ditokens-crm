@@ -37,7 +37,7 @@ export async function TopChannels({ className }: { className?: string }) {
         </TableHeader>
 
         <TableBody>
-          {data.map((channel, i) => (
+          {data.map((channel: any, i: number) => (
             <TableRow
               className="text-center text-base font-medium text-dark dark:text-white"
               key={channel.name + i}

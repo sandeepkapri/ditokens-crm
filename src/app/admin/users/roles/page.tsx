@@ -124,7 +124,7 @@ export default function UserRoleManagement() {
     );
   }
 
-  if (!session || session.user?.email !== "superadmin@ditokens.com") {
+  if (!session || !isSuperAdminUser(session)) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
@@ -235,7 +235,7 @@ export default function UserRoleManagement() {
                     )}
                     
                     {/* Status Toggle */}
-                    {user.email !== "superadmin@ditokens.com" && (
+                    {user.email !== "superadmin@ditokens.com" && user.email !== "contact@ditokens.com" && (
                       <button
                         onClick={() => toggleUserStatus(user.id, user.isActive)}
                         className={`px-2 py-1 rounded border ${
@@ -248,7 +248,7 @@ export default function UserRoleManagement() {
                       </button>
                     )}
                     
-                    {user.email === "superadmin@ditokens.com" && (
+                    {(user.email === "superadmin@ditokens.com" || user.email === "contact@ditokens.com") && (
                       <span className="text-gray-400 text-xs">Protected Account</span>
                     )}
                   </td>

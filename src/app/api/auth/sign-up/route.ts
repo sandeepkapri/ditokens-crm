@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { sendWelcomeEmail } from "@/lib/email-events";
+import { sendWelcomeEmail, sendUserRegistrationAdmin } from "@/lib/email-events";
+import { isDatabaseConnectionError, getDatabaseErrorMessage } from "@/lib/database-health";
 
 const signUpSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -68,6 +69,10 @@ export async function POST(request: NextRequest) {
         email: true,
         role: true,
         referralCode: true,
+        contactNumber: true,
+        country: true,
+        state: true,
+        referredBy: true,
         createdAt: true,
       }
     });
@@ -87,7 +92,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Send welcome email
+    // Send welcome email to user
     try {
       await sendWelcomeEmail(user.id, {
         email: user.email,
@@ -97,6 +102,24 @@ export async function POST(request: NextRequest) {
     } catch (emailError) {
       console.error('Failed to send welcome email:', emailError);
       // Don't fail the signup if email fails
+    }
+
+    // Send admin notification
+    try {
+      await sendUserRegistrationAdmin({
+        userName: user.name,
+        userEmail: user.email,
+        contactNumber: user.contactNumber || 'Not provided',
+        country: user.country || 'Not provided',
+        state: user.state || 'Not provided',
+        referralCode: user.referralCode,
+        referredBy: user.referredBy || undefined,
+        registrationTime: new Date().toLocaleString()
+      });
+      console.log(`Admin notification sent for new user: ${user.email}`);
+    } catch (adminEmailError) {
+      console.error('Failed to send admin notification:', adminEmailError);
+      // Don't fail the signup if admin email fails
     }
 
     return NextResponse.json({
@@ -113,6 +136,18 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("Sign-up error:", error);
+    
+    // Handle database connection errors specifically
+    if (isDatabaseConnectionError(error)) {
+      return NextResponse.json(
+        { 
+          error: getDatabaseErrorMessage(error),
+          type: "database_error"
+        },
+        { status: 503 } // Service Unavailable
+      );
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

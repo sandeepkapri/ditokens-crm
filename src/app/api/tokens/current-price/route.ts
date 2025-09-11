@@ -20,15 +20,14 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "No token price found" }, { status: 404 });
     }
 
-    // Always return the base price of $2.80 for consistent calculations
-    // The random variations are for historical chart display only
-    const basePrice = 2.80;
+    // Return the actual latest price from database for consistent calculations
+    const actualPrice = currentPrice.price;
     
     return NextResponse.json({
-      price: basePrice,
+      price: actualPrice,
       date: currentPrice.date,
       timestamp: new Date().toISOString(),
-      note: "Base price $2.80 - random variations are for chart display only"
+      note: `Current price $${actualPrice} from database`
     });
   } catch (error) {
     console.error("Error fetching current token price:", error);

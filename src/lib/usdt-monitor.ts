@@ -106,8 +106,7 @@ export class USDTMonitor {
       const user = await prisma.user.findFirst({
         where: {
           usdtWalletAddress: {
-            equals: transaction.from,
-            mode: 'insensitive'
+            equals: transaction.from
           }
         }
       });
@@ -210,8 +209,7 @@ export class USDTMonitor {
       const user = await prisma.user.findFirst({
         where: {
           usdtWalletAddress: {
-            equals: transaction.to,
-            mode: 'insensitive'
+            equals: transaction.to
           }
         }
       });
@@ -279,7 +277,7 @@ export class USDTMonitor {
           name: admin.name,
           title: `USDT Transaction Alert - ${event.type.toUpperCase()}`,
           message: event.message,
-          priority: event.priority,
+          priority: event.priority === 'critical' ? 'high' : event.priority,
           additionalInfo: `
 Transaction Hash: ${event.transaction.hash}
 Amount: $${event.amount.toFixed(2)} USDT

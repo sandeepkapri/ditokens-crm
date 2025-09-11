@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { sendLoginNotification } from "@/lib/email-events";
+import { isDatabaseConnectionError, getDatabaseErrorMessage } from "@/lib/database-health";
 
 const signInSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -83,6 +84,18 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("Sign-in error:", error);
+    
+    // Handle database connection errors specifically
+    if (isDatabaseConnectionError(error)) {
+      return NextResponse.json(
+        { 
+          error: getDatabaseErrorMessage(error),
+          type: "database_error"
+        },
+        { status: 503 } // Service Unavailable
+      );
+    }
+
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

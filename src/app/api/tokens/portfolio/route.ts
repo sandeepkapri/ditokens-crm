@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isDatabaseConnectionError, getDatabaseErrorMessage } from "@/lib/database-health";
 
 export async function GET(request: NextRequest) {
   try {
@@ -99,6 +100,29 @@ export async function GET(request: NextRequest) {
     }, { status: 200 });
   } catch (error) {
     console.error("Error fetching portfolio data:", error);
+    
+    // Handle database connection errors specifically
+    if (isDatabaseConnectionError(error)) {
+      return NextResponse.json(
+        { 
+          error: getDatabaseErrorMessage(error),
+          type: "database_error",
+          // Return minimal data for graceful degradation
+          stats: {
+            totalTokens: 0,
+            totalValue: 0,
+            stakedTokens: 0,
+            availableTokens: 0,
+            totalEarnings: 0,
+            referralEarnings: 0,
+          },
+          transactions: [],
+          recentTransactions: []
+        },
+        { status: 503 } // Service Unavailable
+      );
+    }
+
     return NextResponse.json(
       { error: "Failed to fetch portfolio data" },
       { status: 500 }

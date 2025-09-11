@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { isAdminUser } from "@/lib/admin-auth";
+import { isSuperAdminUser } from "@/lib/admin-auth";
 
 interface PendingTransaction {
   id: string;
@@ -26,18 +26,7 @@ export default function PendingPayments() {
   const [processing, setProcessing] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  useEffect(() => {
-    if (status === "loading") return;
-    
-    if (!isAdminUser(session)) {
-      router.push("/auth/sign-in");
-      return;
-    }
-
-    loadPendingTransactions();
-  }, [status, session, router]);
-
-  const loadPendingTransactions = async () => {
+  const loadPendingTransactions = useCallback(async () => {
     try {
       const response = await fetch('/api/admin/payments/pending');
       if (response.ok) {
@@ -53,7 +42,18 @@ export default function PendingPayments() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === "loading") return;
+    
+    if (!isSuperAdminUser(session)) {
+      router.push("/admin/dashboard");
+      return;
+    }
+
+    loadPendingTransactions();
+  }, [status, session?.user?.email, loadPendingTransactions]);
 
   const handlePaymentAction = async (transactionId: string, action: 'confirm' | 'reject', adminNotes?: string) => {
     setProcessing(transactionId);

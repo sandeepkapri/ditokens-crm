@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 
 export default function EmailTestPage() {
   const [email, setEmail] = useState('');
@@ -77,29 +76,29 @@ export default function EmailTestPage() {
         </div>
 
         <div className="flex gap-4">
-          <Button
+          <button
             onClick={() => testEmail('test-connection')}
             disabled={loading}
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-md disabled:opacity-50"
           >
             {loading ? 'Testing...' : 'Test Connection'}
-          </Button>
+          </button>
 
-          <Button
+          <button
             onClick={() => testEmail('send-test')}
             disabled={loading}
             className="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-md disabled:opacity-50"
           >
             {loading ? 'Sending...' : 'Send Test Email'}
-          </Button>
+          </button>
 
-          <Button
+          <button
             onClick={() => testEmail('send-welcome')}
             disabled={loading}
             className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-2 rounded-md disabled:opacity-50"
           >
             {loading ? 'Sending...' : 'Send Welcome Email'}
-          </Button>
+          </button>
         </div>
 
         {result && (
