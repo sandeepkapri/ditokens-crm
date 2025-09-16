@@ -360,7 +360,10 @@ export class EmailService {
       to: email,
       subject: 'Welcome to DiTokens CRM!',
       template: 'welcome',
-      context: { name }
+      context: { 
+        name,
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`
+      }
     });
   }
 
@@ -369,7 +372,14 @@ export class EmailService {
       to: email,
       subject: 'Login Notification - DiTokens CRM',
       template: 'login-notification',
-      context: { name, loginTime, ipAddress }
+      context: { 
+        name, 
+        loginTime, 
+        ipAddress,
+        accountUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard/profile`,
+        deviceInfo: 'Unknown Device',
+        location: 'Unknown Location'
+      }
     });
   }
 
@@ -407,7 +417,7 @@ export class EmailService {
         tokenPrice: tokenPrice || 'N/A',
         processingFee: processingFee || '0',
         currentValue: currentValue || amount,
-        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`
       }
     });
   }
@@ -417,7 +427,21 @@ export class EmailService {
       to: email,
       subject: 'Stake Confirmation - DiTokens CRM',
       template: 'stake-confirmation',
-      context: { name, tokens, period }
+      context: { 
+        name, 
+        tokens, 
+        period,
+        stakeDate: new Date().toLocaleDateString(),
+        transactionId: 'N/A',
+        apy: '12',
+        lockPeriod: period,
+        totalValue: tokens,
+        dailyRewards: '0',
+        monthlyRewards: '0',
+        totalRewards: '0',
+        unlockDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`
+      }
     });
   }
 
@@ -435,7 +459,22 @@ export class EmailService {
       to: email,
       subject: title,
       template: 'notification',
-      context: { name, title, message }
+      context: { 
+        name, 
+        title, 
+        message,
+        subtitle: '',
+        priorityClass: 'medium',
+        additionalInfo: '',
+        actionRequired: '',
+        details: '',
+        ctaText: '',
+        ctaUrl: '',
+        nextSteps: [],
+        tips: [],
+        deadline: '',
+        footerMessage: 'This is an automated notification from DiTokens CRM.'
+      }
     });
   }
 
@@ -458,7 +497,8 @@ export class EmailService {
         walletAddress, 
         withdrawalId,
         lockPeriod: '3 years',
-        estimatedUnlockDate: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toLocaleDateString()
+        estimatedUnlockDate: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`
       }
     });
   }
@@ -488,7 +528,8 @@ export class EmailService {
         userBalance,
         lockPeriod: '3 years',
         estimatedUnlockDate: new Date(Date.now() + 3 * 365 * 24 * 60 * 60 * 1000).toLocaleDateString(),
-        requestTime: new Date().toLocaleString()
+        requestTime: new Date().toLocaleString(),
+        adminDashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin`
       }
     });
   }
@@ -503,7 +544,7 @@ export class EmailService {
       template: 'account-activated',
       context: { 
         name,
-        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`
       }
     });
   }
@@ -528,7 +569,7 @@ export class EmailService {
         walletAddress,
         transactionId,
         paymentMethod,
-        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`
       }
     });
   }
@@ -556,7 +597,8 @@ export class EmailService {
         walletAddress,
         transactionId,
         paymentMethod,
-        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`,
+        adminDashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin`
       }
     });
   }
@@ -581,7 +623,8 @@ export class EmailService {
         walletAddress,
         transactionId,
         processingTime,
-        supportEmail: process.env.EMAIL_FROM || 'support@ditokens.com'
+        supportEmail: process.env.EMAIL_FROM || 'support@ditokens.com',
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`
       }
     });
   }
@@ -608,7 +651,8 @@ export class EmailService {
         transactionId,
         reason,
         supportContact,
-        supportEmail: process.env.EMAIL_FROM || 'support@ditokens.com'
+        supportEmail: process.env.EMAIL_FROM || 'support@ditokens.com',
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`
       }
     });
   }
@@ -658,7 +702,7 @@ export class EmailService {
         transactionId,
         action: isApproved ? 'Approved' : 'Rejected',
         adminNotes,
-        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`,
         // Template-specific variables
         headerColor,
         infoBoxColor,
@@ -679,7 +723,7 @@ export class EmailService {
         emailSent: true,
         requiresAttention: !isApproved,
         attentionMessage: isApproved ? '' : 'User has been notified of rejection. Consider following up if needed.',
-        adminDashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000',
+        adminDashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin`,
         userId: userId || 'unknown'
       }
     });
@@ -710,7 +754,8 @@ export class EmailService {
         referralCode,
         referredBy,
         registrationTime,
-        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`,
+        adminDashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin`
       }
     });
   }
@@ -739,7 +784,8 @@ export class EmailService {
         paymentMethod,
         adminNotes,
         confirmationTime: new Date().toLocaleString(),
-        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`,
+        adminDashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin`
       }
     });
   }
@@ -768,7 +814,8 @@ export class EmailService {
         paymentMethod,
         adminNotes,
         rejectionTime: new Date().toLocaleString(),
-        dashboardUrl: process.env.NEXTAUTH_URL || 'http://localhost:3000'
+        dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard`,
+        adminDashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/admin`
       }
     });
   }

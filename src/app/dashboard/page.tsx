@@ -547,7 +547,7 @@ export default function Dashboard() {
           
           <div className="space-y-3">
             <button
-              onClick={() => router.push("/tokens/purchase")}
+              onClick={() => router.push("/dashboard/tokens/buy")}
               className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               💰 Purchase Tokens
@@ -555,7 +555,7 @@ export default function Dashboard() {
             
             {userStats?.availableTokens && userStats.availableTokens > 0 && (
               <button
-                onClick={() => router.push("/tokens/withdraw")}
+                onClick={() => router.push("/dashboard/wallets/withdrawal")}
                 className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
               >
                 💸 Request Withdrawal
@@ -563,7 +563,7 @@ export default function Dashboard() {
             )}
             
             <button
-              onClick={() => router.push("/referrals")}
+              onClick={() => router.push("/dashboard/referrals/link")}
               className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               🎯 Referral Program
