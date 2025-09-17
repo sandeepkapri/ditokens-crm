@@ -34,7 +34,7 @@ export default function AdminHistoryPage() {
       return;
     }
     
-    if (session?.user?.email !== "admin@ditokens.com") {
+    if (!isAdminUser(session)) {
       router.push("/dashboard");
       return;
     }

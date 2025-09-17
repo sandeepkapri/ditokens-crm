@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { isDatabaseConnectionError, getDatabaseErrorMessage } from "@/lib/database-health";
+import { getStartOfToday, getTodayRange } from "@/lib/date-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,18 +28,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Get token prices for the specified timeframe
+    // Use UTC date calculations to avoid timezone issues
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - days);
+    startDate.setUTCDate(startDate.getUTCDate() - days);
+    startDate.setUTCHours(0, 0, 0, 0); // Start of day
     
-    // Set end date to today to prevent future dates
-    const endDate = new Date();
-    endDate.setHours(23, 59, 59, 999); // End of today
+    // Set end date to end of today in UTC
+    const { end } = getTodayRange(); // This gives us end of today in UTC
 
     const prices = await prisma.tokenPrice.findMany({
       where: {
         date: {
           gte: startDate,
-          lte: endDate, // Only include dates up to today
+          lte: end, // Only include dates up to today (UTC)
         },
       },
       orderBy: { date: "asc" }, // Changed to ascending for chart display
@@ -94,10 +96,13 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new token price entry
+    // Use start of current day to avoid timezone issues
+    const normalizedDate = getStartOfToday();
+    
     const tokenPrice = await prisma.tokenPrice.create({
       data: {
         price: parseFloat(price),
-        date: new Date(),
+        date: normalizedDate,
       },
     });
 

@@ -22,6 +22,7 @@ export default function DepositWalletPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [userBalance, setUserBalance] = useState(0);
+  const [currentPrice, setCurrentPrice] = useState(2.80);
   const [selectedNetwork, setSelectedNetwork] = useState("usdt-erc20");
 
   useEffect(() => {
@@ -39,18 +40,28 @@ export default function DepositWalletPage() {
     try {
       setIsLoading(true);
       
+      const [balanceResponse, depositResponse, priceResponse] = await Promise.all([
+        fetch("/api/tokens/portfolio"),
+        fetch("/api/wallets/deposit"),
+        fetch("/api/tokens/current-price")
+      ]);
+      
       // Load user balance
-      const balanceResponse = await fetch("/api/tokens/portfolio");
       if (balanceResponse.ok) {
         const balanceData = await balanceResponse.json();
         setUserBalance(balanceData.availableTokens || 0);
       }
 
       // Load deposit transactions
-      const response = await fetch("/api/wallets/deposit");
-      if (response.ok) {
-        const data = await response.json();
+      if (depositResponse.ok) {
+        const data = await depositResponse.json();
         setDepositTransactions(data.transactions || []);
+      }
+
+      // Load current price
+      if (priceResponse.ok) {
+        const priceData = await priceResponse.json();
+        setCurrentPrice(priceData.price || 2.80);
       }
     } catch (error) {
       console.error("Failed to load deposit data:", error);
@@ -229,7 +240,7 @@ export default function DepositWalletPage() {
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-green-600 mb-2">
-              ${((userBalance || 0) * 2.80).toFixed(2)}
+              ${((userBalance || 0) * currentPrice).toFixed(2)}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">
               Estimated Value (USD)
@@ -237,7 +248,7 @@ export default function DepositWalletPage() {
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-purple-600 mb-2">
-              {((userBalance || 0) * 2.80 / 1).toFixed(2)}
+              {((userBalance || 0) * currentPrice / 1).toFixed(2)}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">
               Equivalent USDT

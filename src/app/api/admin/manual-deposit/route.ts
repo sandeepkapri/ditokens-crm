@@ -68,12 +68,87 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Update user's token balance
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        totalTokens: { increment: tokenAmount },
-        availableTokens: { increment: tokenAmount },
+    // Update user's token balance and handle referral commission
+    await prisma.$transaction(async (tx) => {
+      // Update user's token balance
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          totalTokens: { increment: tokenAmount },
+          availableTokens: { increment: tokenAmount },
+        }
+      });
+
+      // Handle referral commission if user was referred (FIRST PURCHASE ONLY)
+      if (user.referredBy) {
+        const referrer = await tx.user.findUnique({
+          where: { referralCode: user.referredBy },
+          select: { id: true, name: true, email: true }
+        });
+
+        if (referrer) {
+          // Check if this is the user's first purchase
+          const existingTransactions = await tx.transaction.count({
+            where: {
+              userId: user.id,
+              type: 'PURCHASE',
+              status: 'COMPLETED'
+            }
+          });
+
+          // Only create commission on FIRST purchase (existingTransactions = 0 means this is the first)
+          if (existingTransactions === 0) {
+            const commissionAmount = usdtAmount * 0.05; // 5% commission
+            const commissionTokenAmount = tokenAmount * 0.05;
+
+            // Check if referral commission already exists (shouldn't happen for first purchase)
+            const existingCommission = await tx.referralCommission.findFirst({
+              where: {
+                referrerId: referrer.id,
+                referredUserId: user.id,
+              }
+            });
+
+            if (!existingCommission) {
+              // Create referral commission record for first purchase only
+              await tx.referralCommission.create({
+                data: {
+                  referrerId: referrer.id,
+                  referredUserId: user.id,
+                  amount: commissionAmount,
+                  tokenAmount: commissionTokenAmount,
+                  pricePerToken: currentPrice, // Save current price at time of first purchase
+                  month: new Date().getMonth() + 1,
+                  year: new Date().getFullYear(),
+                }
+              });
+
+              // Update referrer's earnings
+              await tx.user.update({
+                where: { id: referrer.id },
+                data: {
+                  referralEarnings: { increment: commissionAmount }
+                }
+              });
+
+              // Create notification for referrer
+              await tx.notification.create({
+                data: {
+                  userId: referrer.id,
+                  title: 'Referral Commission Earned',
+                  message: `You earned $${commissionAmount.toFixed(2)} commission from ${user.name}'s first purchase of $${usdtAmount.toFixed(2)} at $${currentPrice}/token`,
+                  type: 'INFO',
+                  priority: 'medium',
+                  isRead: false,
+                }
+              });
+
+              console.log(`FIRST PURCHASE: Referral commission created: $${commissionAmount} for referrer ${referrer.email} from ${user.email}'s $${usdtAmount} purchase at $${currentPrice}/token`);
+            }
+          } else {
+            console.log(`SKIPPED: Commission not created - this is not ${user.email}'s first purchase (existing transactions: ${existingTransactions})`);
+          }
+        }
       }
     });
 
@@ -135,10 +210,30 @@ export async function POST(request: NextRequest) {
 
 async function getCurrentTokenPrice(): Promise<number> {
   try {
-    const latestPrice = await prisma.tokenPrice.findFirst({
+    // Get today's price first, then fall back to most recent price
+    const todayStr = new Date().toISOString().split('T')[0];
+    const start = new Date(todayStr + 'T00:00:00.000Z');
+    const end = new Date(todayStr + 'T23:59:59.999Z');
+    
+    // Try to get today's price first
+    let currentPrice = await prisma.tokenPrice.findFirst({
+      where: {
+        date: {
+          gte: start,
+          lte: end
+        }
+      },
       orderBy: { date: 'desc' }
     });
-    return latestPrice ? Number(latestPrice.price) : 2.80;
+    
+    // If no price for today, get the most recent price
+    if (!currentPrice) {
+      currentPrice = await prisma.tokenPrice.findFirst({
+        orderBy: { date: 'desc' }
+      });
+    }
+    
+    return currentPrice ? Number(currentPrice.price) : 2.80;
   } catch (error) {
     console.error('Error getting current token price:', error);
     return 2.80; // Fallback price

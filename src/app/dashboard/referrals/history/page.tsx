@@ -26,7 +26,8 @@ export default function ReferralHistoryPage() {
     totalReferrals: 0,
     activeReferrals: 0,
     totalCommission: 0,
-    pendingCommission: 0,
+    totalPendingCommission: 0,
+    totalCommissionEarned: 0,
   });
 
   useEffect(() => {
@@ -44,8 +45,14 @@ export default function ReferralHistoryPage() {
       const response = await fetch("/api/user/referrals/history");
       if (response.ok) {
         const data = await response.json();
+        console.log("Referral History API Response:", data);
         setReferrals(data.referrals || []);
-        setStats(data.stats || {});
+        setStats(prevStats => ({
+          ...prevStats,
+          ...(data.stats || {})
+        }));
+      } else {
+        console.error("Referral History API Error:", response.status, response.statusText);
       }
     } catch (error) {
       console.error("Failed to load referral history:", error);
@@ -119,7 +126,7 @@ export default function ReferralHistoryPage() {
             <div className="mt-4 flex items-end justify-between">
               <div>
                 <h4 className="text-title-md font-bold text-black dark:text-white">
-                  {stats.totalReferrals}
+                  {stats.totalReferrals || 0}
                 </h4>
                 <span className="text-sm font-medium">Total Referrals</span>
               </div>
@@ -135,7 +142,7 @@ export default function ReferralHistoryPage() {
             <div className="mt-4 flex items-end justify-between">
               <div>
                 <h4 className="text-title-md font-bold text-black dark:text-white">
-                  {stats.activeReferrals}
+                  {stats.activeReferrals || 0}
                 </h4>
                 <span className="text-sm font-medium">Active Referrals</span>
               </div>
@@ -151,7 +158,7 @@ export default function ReferralHistoryPage() {
             <div className="mt-4 flex items-end justify-between">
               <div>
                 <h4 className="text-title-md font-bold text-black dark:text-white">
-                  ${stats.totalCommission.toFixed(2)}
+                  ${(stats.totalCommission || 0).toFixed(2)}
                 </h4>
                 <span className="text-sm font-medium">Total Commission</span>
               </div>
@@ -167,7 +174,7 @@ export default function ReferralHistoryPage() {
             <div className="mt-4 flex items-end justify-between">
               <div>
                 <h4 className="text-title-md font-bold text-black dark:text-white">
-                  ${stats.pendingCommission.toFixed(2)}
+                  ${(stats.totalPendingCommission || 0).toFixed(2)}
                 </h4>
                 <span className="text-sm font-medium">Pending Commission</span>
               </div>
@@ -201,7 +208,7 @@ export default function ReferralHistoryPage() {
                       Commission
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Last Purchase
+                      First Commission
                     </th>
                   </tr>
                 </thead>
@@ -231,7 +238,16 @@ export default function ReferralHistoryPage() {
                         ${referral.commissionEarned.toFixed(2)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {referral.lastPurchase ? new Date(referral.lastPurchase).toLocaleDateString() : "Never"}
+                        {referral.firstCommissionDate ? (
+                          <div>
+                            <div>{new Date(referral.firstCommissionDate).toLocaleDateString()}</div>
+                            <div className="text-xs text-gray-400 dark:text-gray-500">
+                              First purchase: ${referral.firstCommissionAmount?.toFixed(2) || '0.00'}
+                            </div>
+                          </div>
+                        ) : (
+                          "No commission yet"
+                        )}
                       </td>
                     </tr>
                   ))}

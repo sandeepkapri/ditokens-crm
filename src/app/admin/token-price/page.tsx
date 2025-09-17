@@ -22,6 +22,7 @@ export default function TokenPricePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [tokenPrices, setTokenPrices] = useState<TokenPrice[]>([]);
+  const [priceStats, setPriceStats] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [showUpdateForm, setShowUpdateForm] = useState(false);
@@ -53,11 +54,21 @@ export default function TokenPricePage() {
 
   const loadTokenPrices = async () => {
     try {
-      const response = await fetch("/api/admin/token-price");
-      if (response.ok) {
-        const data = await response.json();
+      const [pricesResponse, statsResponse] = await Promise.all([
+        fetch("/api/admin/token-price"),
+        fetch("/api/tokens/price-stats")
+      ]);
+      
+      if (pricesResponse.ok) {
+        const data = await pricesResponse.json();
         console.log('Token prices loaded:', data.prices);
         setTokenPrices(data.prices || []);
+      }
+      
+      if (statsResponse.ok) {
+        const statsData = await statsResponse.json();
+        console.log('Price stats loaded:', statsData);
+        setPriceStats(statsData);
       }
     } catch (error) {
       console.error("Error loading token prices:", error);
@@ -110,6 +121,10 @@ export default function TokenPricePage() {
   };
 
   const getCurrentPrice = () => {
+    // Use priceStats if available, otherwise fall back to tokenPrices
+    if (priceStats?.currentPrice) {
+      return priceStats.currentPrice;
+    }
     if (tokenPrices.length === 0) return 0;
     const today = new Date().toISOString().split('T')[0];
     const todayPrice = tokenPrices.find(p => p.date === today);
@@ -180,7 +195,8 @@ export default function TokenPricePage() {
 
     // Add cells for each day of the month
     for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(selectedYear, selectedMonth, day);
+      // Use UTC date creation to avoid timezone issues
+      const date = new Date(Date.UTC(selectedYear, selectedMonth, day));
       const price = getPriceForDate(date);
       const isToday = date.toDateString() === new Date().toDateString();
       const isPast = date < new Date();
@@ -247,12 +263,22 @@ export default function TokenPricePage() {
         <h2 className="text-title-md2 font-bold text-black dark:text-white">
           Token Price Management
         </h2>
-        <button
-          onClick={() => setShowUpdateForm(!showUpdateForm)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          {showUpdateForm ? "Cancel" : "Update Token Price"}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => {
+              loadTokenPrices();
+            }}
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          >
+            🔄 Refresh
+          </button>
+          <button
+            onClick={() => setShowUpdateForm(!showUpdateForm)}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            {showUpdateForm ? "Cancel" : "Update Token Price"}
+          </button>
+        </div>
       </div>
 
       {message && (
@@ -273,7 +299,7 @@ export default function TokenPricePage() {
               Current Price
             </h3>
             <div className="text-3xl font-bold text-blue-600 mb-2">
-              ${stats?.currentPrice?.toFixed(2) || "0.00"}
+              ${priceStats?.currentPrice?.toFixed(2) || stats?.currentPrice?.toFixed(2) || "0.00"}
             </div>
             <p className="text-sm text-gray-500">Latest token value</p>
           </div>
@@ -285,7 +311,7 @@ export default function TokenPricePage() {
               Total Updates
             </h3>
             <div className="text-3xl font-bold text-green-600 mb-2">
-              {stats?.totalUpdates || 0}
+              {priceStats?.totalUpdates || stats?.totalUpdates || 0}
             </div>
             <p className="text-sm text-gray-500">Price changes made</p>
           </div>
@@ -297,7 +323,7 @@ export default function TokenPricePage() {
               Highest Price
             </h3>
             <div className="text-3xl font-bold text-purple-600 mb-2">
-              ${stats?.highest?.toFixed(2) || "0.00"}
+              ${priceStats?.highestPrice?.toFixed(2) || stats?.highest?.toFixed(2) || "0.00"}
             </div>
             <p className="text-sm text-gray-500">Peak value</p>
           </div>
@@ -309,7 +335,7 @@ export default function TokenPricePage() {
               Average Price
             </h3>
             <div className="text-3xl font-bold text-orange-600 mb-2">
-              ${stats?.average?.toFixed(2) || "0.00"}
+              ${priceStats?.averagePrice?.toFixed(2) || stats?.average?.toFixed(2) || "0.00"}
             </div>
             <p className="text-sm text-gray-500">Mean value</p>
           </div>

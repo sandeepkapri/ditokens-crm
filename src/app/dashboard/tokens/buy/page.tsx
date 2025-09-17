@@ -74,10 +74,10 @@ export default function BuyTokensPage() {
 
   const loadCurrentPrice = async () => {
     try {
-      const response = await fetch("/api/tokens/price");
+      const response = await fetch("/api/tokens/current-price");
       if (response.ok) {
         const data = await response.json();
-        setCurrentPrice(data.currentPrice || 2.8);
+        setCurrentPrice(data.price || 2.8);
       }
     } catch (error) {
       console.error("Failed to load current price:", error);

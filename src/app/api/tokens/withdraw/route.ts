@@ -168,10 +168,30 @@ export async function POST(request: NextRequest) {
 
 async function getCurrentTokenPrice(): Promise<number> {
   try {
-    const latestPrice = await prisma.tokenPrice.findFirst({
+    // Get today's price first, then fall back to most recent price
+    const todayStr = new Date().toISOString().split('T')[0];
+    const start = new Date(todayStr + 'T00:00:00.000Z');
+    const end = new Date(todayStr + 'T23:59:59.999Z');
+    
+    // Try to get today's price first
+    let currentPrice = await prisma.tokenPrice.findFirst({
+      where: {
+        date: {
+          gte: start,
+          lte: end
+        }
+      },
       orderBy: { date: "desc" }
     });
-    return latestPrice?.price || 2.80; // Default fallback price
+    
+    // If no price for today, get the most recent price
+    if (!currentPrice) {
+      currentPrice = await prisma.tokenPrice.findFirst({
+        orderBy: { date: "desc" }
+      });
+    }
+    
+    return currentPrice?.price || 2.80; // Default fallback price
   } catch (error) {
     console.error("Error fetching token price:", error);
     return 2.80; // Default fallback price

@@ -35,6 +35,7 @@ export default function TokenOverviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [timeframe, setTimeframe] = useState("7d");
   const [databaseError, setDatabaseError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -46,12 +47,28 @@ export default function TokenOverviewPage() {
     }
   }, [status, router, session, timeframe]);
 
+  // Auto-refresh data every 30 seconds
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const interval = setInterval(() => {
+      loadTokenData();
+      setLastRefresh(new Date());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [session, timeframe]);
+
   const loadTokenData = async () => {
     try {
       setDatabaseError(null); // Reset error state
       
-      // Load token statistics
-      const statsResponse = await fetch("/api/tokens/stats");
+      // Load token statistics and price stats
+      const [statsResponse, priceStatsResponse] = await Promise.all([
+        fetch("/api/tokens/stats"),
+        fetch("/api/tokens/price-stats")
+      ]);
+      
       if (statsResponse.ok) {
         const statsData = await statsResponse.json();
         setTokenStats(statsData);
@@ -62,6 +79,21 @@ export default function TokenOverviewPage() {
           setDatabaseError(errorData.error);
           return;
         }
+      }
+
+      if (priceStatsResponse.ok) {
+        const priceStatsData = await priceStatsResponse.json();
+        // Update token stats with real-time price data
+        setTokenStats(prev => prev ? {
+          ...prev,
+          currentPrice: priceStatsData.currentPrice,
+          latestPrice: priceStatsData.latestPrice,
+          totalUpdates: priceStatsData.totalUpdates,
+          highestPrice: priceStatsData.highestPrice,
+          averagePrice: priceStatsData.averagePrice,
+          priceChange24h: priceStatsData.priceChange24h,
+          priceChangePercent24h: priceStatsData.priceChangePercent24h
+        } : null);
       }
 
       // Load price data
@@ -193,12 +225,30 @@ export default function TokenOverviewPage() {
       <div className="mx-auto max-w-screen-2xl">
         {/* Page Header */}
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-title-md2 font-bold text-black dark:text-white">
-            Token Management
-          </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Monitor and manage your Ditokens portfolio
-          </p>
+          <div>
+            <h2 className="text-title-md2 font-bold text-black dark:text-white">
+              Token Management
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
+              Monitor and manage your Ditokens portfolio
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                loadTokenData();
+                setLastRefresh(new Date());
+              }}
+              className="px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors"
+              title="Refresh data"
+            >
+              🔄 Refresh
+            </button>
+            <span className="text-xs text-gray-500">
+              Last updated: {lastRefresh.toLocaleTimeString()}
+            </span>
+          </div>
         </div>
 
         {/* Token Statistics */}

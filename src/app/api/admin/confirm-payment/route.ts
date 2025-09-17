@@ -79,36 +79,62 @@ export async function POST(request: NextRequest) {
           });
 
           if (referrer) {
-            const commissionAmount = transaction.amount * 0.05; // 5% commission
-            const commissionTokenAmount = transaction.tokenAmount * 0.05;
-
-            // Create referral commission record
-            await tx.referralCommission.create({
-              data: {
-                referrerId: referrer.id,
-                referredUserId: transaction.userId,
-                amount: commissionAmount,
-                tokenAmount: commissionTokenAmount,
-                pricePerToken: transaction.pricePerToken,
-                month: new Date().getMonth() + 1,
-                year: new Date().getFullYear(),
+            // Check if this is the user's first purchase
+            const existingTransactions = await tx.transaction.count({
+              where: {
+                userId: transaction.userId,
+                type: 'PURCHASE',
+                status: 'COMPLETED'
               }
             });
 
-            // Update referrer's earnings
-            await tx.user.update({
-              where: { id: referrer.id },
-              data: {
-                referralEarnings: { increment: commissionAmount }
-              }
-            });
+            // Only create commission on FIRST purchase (existingTransactions = 1 means this is the first, since we're confirming it)
+            if (existingTransactions === 1) {
+              const commissionAmount = transaction.amount * 0.05; // 5% commission
+              const commissionTokenAmount = transaction.tokenAmount * 0.05;
 
-            // Create notification for referrer
-            await NotificationHelpers.onReferralCommission(
-              referrer.id,
-              commissionAmount,
-              transaction.user.name || "User"
-            );
+              // Check if referral commission already exists (shouldn't happen for first purchase)
+              const existingCommission = await tx.referralCommission.findFirst({
+                where: {
+                  referrerId: referrer.id,
+                  referredUserId: transaction.userId,
+                }
+              });
+
+              if (!existingCommission) {
+                // Create referral commission record for first purchase only
+                await tx.referralCommission.create({
+                  data: {
+                    referrerId: referrer.id,
+                    referredUserId: transaction.userId,
+                    amount: commissionAmount,
+                    tokenAmount: commissionTokenAmount,
+                    pricePerToken: transaction.pricePerToken, // Save price at time of first purchase
+                    month: new Date().getMonth() + 1,
+                    year: new Date().getFullYear(),
+                  }
+                });
+
+                // Update referrer's earnings
+                await tx.user.update({
+                  where: { id: referrer.id },
+                  data: {
+                    referralEarnings: { increment: commissionAmount }
+                  }
+                });
+
+                console.log(`FIRST PURCHASE: Referral commission created: $${commissionAmount} for referrer ${referrer.id} from user ${transaction.userId}'s $${transaction.amount} purchase at $${transaction.pricePerToken}/token`);
+
+                // Create notification for referrer
+                await NotificationHelpers.onReferralCommission(
+                  referrer.id,
+                  commissionAmount,
+                  transaction.user.name || "User"
+                );
+              }
+            } else {
+              console.log(`SKIPPED: Commission not created - this is not user ${transaction.userId}'s first purchase (existing transactions: ${existingTransactions})`);
+            }
           }
         }
       });

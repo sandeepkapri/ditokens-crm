@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [currentPrice, setCurrentPrice] = useState(2.80);
   const [databaseError, setDatabaseError] = useState<string | null>(null);
+  const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
   useEffect(() => {
     if (status === "loading") return;
@@ -54,14 +55,27 @@ export default function Dashboard() {
     loadDashboardData();
   }, [status, session, router]);
 
+  // Auto-refresh data every 30 seconds
+  useEffect(() => {
+    if (!session) return;
+
+    const interval = setInterval(() => {
+      loadDashboardData();
+      setLastRefresh(new Date());
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [session]);
+
   const loadDashboardData = async () => {
     try {
       setDatabaseError(null); // Reset error state
       
-      const [portfolioResponse, withdrawalsResponse, pricesResponse] = await Promise.all([
+      const [portfolioResponse, withdrawalsResponse, pricesResponse, currentPriceResponse] = await Promise.all([
         fetch("/api/tokens/portfolio"),
         fetch("/api/tokens/withdrawals"),
-        fetch("/api/tokens/price")
+        fetch("/api/tokens/price"),
+        fetch("/api/tokens/current-price")
       ]);
 
       // Check for database errors in portfolio response
@@ -93,15 +107,19 @@ export default function Dashboard() {
         const pricesData = await pricesResponse.json();
         console.log('Price API response:', pricesData);
         setTokenPrices(pricesData.priceData || []);
-        if (pricesData.priceData && pricesData.priceData.length > 0) {
-          setCurrentPrice(pricesData.priceData[0].price);
-        }
       } else if (pricesResponse.status === 503) {
         const errorData = await pricesResponse.json();
         if (errorData.type === 'database_error') {
           setDatabaseError(errorData.error);
           return;
         }
+      }
+
+      // Get current price from dedicated API
+      if (currentPriceResponse.ok) {
+        const currentPriceData = await currentPriceResponse.json();
+        console.log('Current price API response:', currentPriceData);
+        setCurrentPrice(currentPriceData.price || 2.80);
       }
     } catch (error) {
       console.error("Error loading dashboard data:", error);
@@ -225,13 +243,31 @@ export default function Dashboard() {
         <h2 className="text-title-md2 font-bold text-black dark:text-white">
           Dashboard
         </h2>
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Current Token Price:
-          </span>
-          <span className="text-lg font-bold text-blue-600">
-            ${currentPrice}
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              Current Token Price:
+            </span>
+            <span className="text-lg font-bold text-blue-600">
+              ${currentPrice}
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                loadDashboardData();
+                setLastRefresh(new Date());
+              }}
+              className="px-3 py-1 text-sm bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-md transition-colors"
+              title="Refresh data"
+            >
+              🔄 Refresh
+            </button>
+            <span className="text-xs text-gray-500">
+              Last updated: {lastRefresh.toLocaleTimeString()}
+            </span>
+          </div>
         </div>
       </div>
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getTodayRange } from "@/lib/date-utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,8 +11,30 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get current token price
-    const currentPrice = 2.8; // This would come from a price feed in production
+    // Get current token price from database (today's price first, then most recent)
+    const { start, end } = getTodayRange();
+    
+    // Try to get today's price first
+    let currentPriceRecord = await prisma.tokenPrice.findFirst({
+      where: {
+        date: {
+          gte: start,
+          lte: end
+        }
+      },
+      orderBy: { date: 'desc' },
+      select: { price: true }
+    });
+    
+    // If no price for today, get the most recent price
+    if (!currentPriceRecord) {
+      currentPriceRecord = await prisma.tokenPrice.findFirst({
+        orderBy: { date: 'desc' },
+        select: { price: true }
+      });
+    }
+    
+    const currentPrice = currentPriceRecord?.price || 2.8;
 
     // Get total supply and market data
     const totalSupply = 50000000; // 50M total supply

@@ -1,8 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getTodayRange } from "@/lib/date-utils";
 
 export async function GET(request: NextRequest) {
   try {
+    // Get current token price first
+    const { start, end } = getTodayRange();
+    
+    // Try to get today's price first
+    let currentPriceRecord = await prisma.tokenPrice.findFirst({
+      where: {
+        date: {
+          gte: start,
+          lte: end
+        }
+      },
+      orderBy: { date: 'desc' },
+      select: { price: true }
+    });
+    
+    // If no price for today, get the most recent price
+    if (!currentPriceRecord) {
+      currentPriceRecord = await prisma.tokenPrice.findFirst({
+        orderBy: { date: 'desc' },
+        select: { price: true }
+      });
+    }
+    
+    const currentPrice = currentPriceRecord?.price || 2.80;
+
     // Get real statistics from database
     const [
       totalUsers,
@@ -142,8 +168,8 @@ export async function GET(request: NextRequest) {
     ]);
 
     // Calculate additional statistics
-    const totalTokensValue = (totalTokens._sum.totalTokens || 0) * 2.80; // Assuming $2.80 per token
-    const totalStakedValue = (totalStaked._sum.stakedTokens || 0) * 2.80;
+    const totalTokensValue = (totalTokens._sum.totalTokens || 0) * currentPrice;
+    const totalStakedValue = (totalStaked._sum.stakedTokens || 0) * currentPrice;
     const totalCommissionsValue = totalCommissions._sum.amount || 0;
 
     // Format recent activity

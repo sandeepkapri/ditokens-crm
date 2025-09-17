@@ -301,10 +301,30 @@ Block: ${event.transaction.blockNumber}
    */
   private static async getCurrentTokenPrice(): Promise<number> {
     try {
-      const latestPrice = await prisma.tokenPrice.findFirst({
+      // Get today's price first, then fall back to most recent price
+      const todayStr = new Date().toISOString().split('T')[0];
+      const start = new Date(todayStr + 'T00:00:00.000Z');
+      const end = new Date(todayStr + 'T23:59:59.999Z');
+      
+      // Try to get today's price first
+      let currentPrice = await prisma.tokenPrice.findFirst({
+        where: {
+          date: {
+            gte: start,
+            lte: end
+          }
+        },
         orderBy: { date: 'desc' }
       });
-      return latestPrice ? Number(latestPrice.price) : 2.80;
+      
+      // If no price for today, get the most recent price
+      if (!currentPrice) {
+        currentPrice = await prisma.tokenPrice.findFirst({
+          orderBy: { date: 'desc' }
+        });
+      }
+      
+      return currentPrice ? Number(currentPrice.price) : 2.80;
     } catch (error) {
       console.error('Error getting current token price:', error);
       return 2.80; // Fallback price

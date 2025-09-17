@@ -39,6 +39,7 @@ export default function AdminStakingPage() {
     completedStakes: 0,
   });
   const [stakingRecords, setStakingRecords] = useState<StakingRecord[]>([]);
+  const [currentPrice, setCurrentPrice] = useState(2.80);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
 
@@ -48,7 +49,7 @@ export default function AdminStakingPage() {
       return;
     }
     
-    if (session?.user?.email !== "admin@ditokens.com") {
+    if (!isAdminUser(session)) {
       router.push("/dashboard");
       return;
     }
@@ -60,9 +61,10 @@ export default function AdminStakingPage() {
 
   const loadStakingData = async () => {
     try {
-      const [statsResponse, recordsResponse] = await Promise.all([
+      const [statsResponse, recordsResponse, priceResponse] = await Promise.all([
         fetch("/api/admin/staking/stats"),
-        fetch("/api/admin/staking/records")
+        fetch("/api/admin/staking/records"),
+        fetch("/api/tokens/current-price")
       ]);
 
       if (statsResponse.ok) {
@@ -73,6 +75,11 @@ export default function AdminStakingPage() {
       if (recordsResponse.ok) {
         const recordsData = await recordsResponse.json();
         setStakingRecords(recordsData.records);
+      }
+
+      if (priceResponse.ok) {
+        const priceData = await priceResponse.json();
+        setCurrentPrice(priceData.price || 2.80);
       }
     } catch (error) {
       console.error("Failed to load staking data:", error);
@@ -342,7 +349,7 @@ export default function AdminStakingPage() {
               <div className="flex justify-between">
                 <span className="text-sm text-gray-600 dark:text-gray-400">Total Value Locked:</span>
                 <span className="text-sm font-medium text-black dark:text-white">
-                  ${(stakingStats.totalStaked * 2.80).toFixed(2)}
+                  ${(stakingStats.totalStaked * currentPrice).toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between">

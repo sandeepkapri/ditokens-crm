@@ -46,7 +46,7 @@ export default function AdminReferralsPage() {
       return;
     }
     
-    if (session?.user?.email !== "admin@ditokens.com") {
+    if (!isAdminUser(session)) {
       router.push("/dashboard");
       return;
     }

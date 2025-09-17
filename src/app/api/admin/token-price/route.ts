@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { normalizeToStartOfDay, getDayRange, getTodayString } from "@/lib/date-utils";
 
 const priceSchema = z.object({
   price: z.number().positive(),
@@ -62,15 +63,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { price, date } = priceSchema.parse(body);
 
-    // Use provided date or default to today
+    // Use provided date or default to today, normalized to start of day
     const targetDate = date ? new Date(date) : new Date();
+    const normalizedDate = normalizeToStartOfDay(targetDate);
+    
+    // Get the day range for the target date
+    const { start, end } = getDayRange(normalizedDate);
     
     // Check if a price already exists for this date
     const existingPrice = await prisma.tokenPrice.findFirst({
       where: {
         date: {
-          gte: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate()),
-          lt: new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1),
+          gte: start,
+          lte: end,
         },
       },
     });
@@ -84,16 +89,16 @@ export async function POST(request: NextRequest) {
           price,
         },
       });
-      console.log(`Superadmin ${session.user.email} updated existing token price for ${targetDate.toISOString().split('T')[0]} to $${price}`);
+      console.log(`Superadmin ${session.user.email} updated existing token price for ${normalizedDate.toISOString().split('T')[0]} to $${price}`);
     } else {
       // Create new price record for this date
       result = await prisma.tokenPrice.create({
         data: {
           price,
-          date: targetDate,
+          date: normalizedDate,
         },
       });
-      console.log(`Superadmin ${session.user.email} created new token price for ${targetDate.toISOString().split('T')[0]}: $${price}`);
+      console.log(`Superadmin ${session.user.email} created new token price for ${normalizedDate.toISOString().split('T')[0]}: $${price}`);
     }
 
     return NextResponse.json({
