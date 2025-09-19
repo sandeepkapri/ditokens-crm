@@ -6,6 +6,7 @@ import { z } from "zod";
 
 const stakeSchema = z.object({
   amount: z.number().positive(),
+  stakingPeriod: z.number().min(3).max(10), // Staking period in years (3-10)
 });
 
 export async function POST(request: NextRequest) {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { amount } = stakeSchema.parse(body);
+    const { amount, stakingPeriod } = stakeSchema.parse(body);
 
     // Get the current user
     const user = await prisma.user.findUnique({
@@ -40,16 +41,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Calculate staking period (3 years minimum)
+    // Calculate staking period based on user selection
     const startDate = new Date();
     const endDate = new Date();
-    endDate.setFullYear(endDate.getFullYear() + 3);
+    endDate.setFullYear(endDate.getFullYear() + stakingPeriod);
 
     // Create staking record
     const stakingRecord = await prisma.stakingRecord.create({
       data: {
         userId: user.id,
         amount,
+        stakingPeriod,
         startDate,
         endDate,
         status: "ACTIVE",

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import InputGroup from "@/components/FormElements/InputGroup";
 import { EmailIcon, PasswordIcon, UserIcon, CallIcon, GlobeIcon } from "@/assets/icons";
+import { countries } from "@/data/countries";
 
 export default function Signup() {
   const router = useRouter();
@@ -142,16 +143,11 @@ export default function Signup() {
               className="w-full rounded-lg border border-stroke bg-transparent px-5 py-3 pl-9 outline-none transition focus:border-primary active:border-primary disabled:cursor-default disabled:bg-whiter dark:border-form-strokedark dark:bg-form-input dark:focus:border-primary"
             >
               <option value="">Select Country</option>
-              <option value="US">United States</option>
-              <option value="CA">Canada</option>
-              <option value="UK">United Kingdom</option>
-              <option value="AU">Australia</option>
-              <option value="DE">Germany</option>
-              <option value="FR">France</option>
-              <option value="IN">India</option>
-              <option value="CN">China</option>
-              <option value="JP">Japan</option>
-              <option value="BR">Brazil</option>
+              {countries.map((country) => (
+                <option key={country.code} value={country.code}>
+                  {country.name}
+                </option>
+              ))}
             </select>
             {errors.country && <p className="mt-1 text-sm text-danger">{errors.country}</p>}
           </div>

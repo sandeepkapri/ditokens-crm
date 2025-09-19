@@ -217,6 +217,8 @@ async function main() {
           amount: commissionAmount,
           tokenAmount: referredUser.totalTokens * 0.05,
           pricePerToken: 2.80,
+          commissionPercentage: 5.0,
+          status: "APPROVED",
           month: new Date().getMonth() + 1,
           year: new Date().getFullYear(),
           isPaid: Math.random() > 0.3, // 70% paid

@@ -73,9 +73,9 @@ export async function POST(request: NextRequest) {
         });
 
         // Handle referral commission if applicable
-        if (transaction.user.referredBy) {
+        if ((transaction.user as any).referredBy) {
           const referrer = await tx.user.findUnique({
-            where: { referralCode: transaction.user.referredBy }
+            where: { referralCode: (transaction.user as any).referredBy }
           });
 
           if (referrer) {
@@ -90,8 +90,21 @@ export async function POST(request: NextRequest) {
 
             // Only create commission on FIRST purchase (existingTransactions = 1 means this is the first, since we're confirming it)
             if (existingTransactions === 1) {
-              const commissionAmount = transaction.amount * 0.05; // 5% commission
-              const commissionTokenAmount = transaction.tokenAmount * 0.05;
+              // Get current commission percentage from settings
+              let commissionSettings = await tx.commissionSettings.findFirst();
+              if (!commissionSettings) {
+                // Create default settings if none exist
+                commissionSettings = await tx.commissionSettings.create({
+                  data: {
+                    referralRate: 5.0,
+                    updatedBy: session.user.email || "system",
+                  }
+                });
+              }
+
+              const commissionPercentage = commissionSettings.referralRate / 100; // Convert percentage to decimal
+              const commissionAmount = transaction.amount * commissionPercentage; // Commission in USDT
+              const commissionTokenAmount = transaction.tokenAmount * commissionPercentage; // Commission in DIT tokens (for reference)
 
               // Check if referral commission already exists (shouldn't happen for first purchase)
               const existingCommission = await tx.referralCommission.findFirst({
@@ -110,6 +123,8 @@ export async function POST(request: NextRequest) {
                     amount: commissionAmount,
                     tokenAmount: commissionTokenAmount,
                     pricePerToken: transaction.pricePerToken, // Save price at time of first purchase
+                    commissionPercentage: commissionSettings.referralRate, // Save the percentage used
+                    status: "APPROVED", // Automatically approved when payment is confirmed
                     month: new Date().getMonth() + 1,
                     year: new Date().getFullYear(),
                   }

@@ -820,6 +820,163 @@ export class EmailService {
     });
   }
 
+  /**
+   * Send USDT deposit confirmation email
+   */
+  async sendUsdtDepositConfirmation(
+    email: string,
+    name: string,
+    amount: string,
+    transactionId: string,
+    network: string,
+    fromWallet: string,
+    txHash: string,
+    depositDate: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      subject: `USDT Deposit Confirmed - $${amount}`,
+      template: 'usdt-deposit-confirmation',
+      context: {
+        name,
+        amount,
+        transactionId,
+        network,
+        fromWallet,
+        txHash,
+        depositDate
+      }
+    });
+  }
+
+  /**
+   * Send USDT withdrawal request email
+   */
+  async sendUsdtWithdrawalRequest(
+    email: string,
+    name: string,
+    amount: string,
+    network: string,
+    walletAddress: string,
+    withdrawalId: string,
+    requestDate: string,
+    processingFee: string,
+    totalAmount: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      subject: `USDT Withdrawal Request Submitted - $${amount}`,
+      template: 'usdt-withdrawal-request',
+      context: {
+        name,
+        amount,
+        network,
+        walletAddress,
+        withdrawalId,
+        requestDate,
+        processingFee,
+        totalAmount
+      }
+    });
+  }
+
+  /**
+   * Send USDT withdrawal approved email
+   */
+  async sendUsdtWithdrawalApproved(
+    email: string,
+    name: string,
+    amount: string,
+    network: string,
+    walletAddress: string,
+    transactionId: string,
+    approvalDate: string,
+    processingFee: string,
+    networkFee: string,
+    totalAmount: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      subject: `USDT Withdrawal Approved - $${amount}`,
+      template: 'usdt-withdrawal-approved',
+      context: {
+        name,
+        amount,
+        network,
+        walletAddress,
+        transactionId,
+        approvalDate,
+        processingFee,
+        networkFee,
+        totalAmount
+      }
+    });
+  }
+
+  /**
+   * Send DIT to USDT conversion confirmation email
+   */
+  async sendDitToUsdtConversion(
+    email: string,
+    name: string,
+    ditAmount: string,
+    usdtAmount: string,
+    exchangeRate: string,
+    conversionFee: string,
+    transactionId: string,
+    conversionDate: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      subject: `DIT to USDT Conversion Complete - ${ditAmount} DIT → $${usdtAmount}`,
+      template: 'dit-to-usdt-conversion',
+      context: {
+        name,
+        ditAmount,
+        usdtAmount,
+        exchangeRate,
+        conversionFee,
+        transactionId,
+        conversionDate
+      }
+    });
+  }
+
+  /**
+   * Send DIT purchase from USDT balance email
+   */
+  async sendDitPurchaseFromBalance(
+    email: string,
+    name: string,
+    tokens: string,
+    usdtAmount: string,
+    tokenPrice: string,
+    processingFee: string,
+    totalAmount: string,
+    transactionId: string,
+    purchaseDate: string,
+    remainingUsdtBalance: string,
+    totalDitTokens: string
+  ): Promise<boolean> {
+    return this.sendEmail({
+      to: email,
+      subject: `DIT Tokens Purchased - ${tokens} DIT for $${usdtAmount}`,
+      template: 'dit-purchase-from-balance',
+      context: {
+        name,
+        tokens,
+        usdtAmount,
+        tokenPrice,
+        processingFee,
+        totalAmount,
+        transactionId,
+        purchaseDate,
+        remainingUsdtBalance,
+        totalDitTokens
+      }
+    });
+  }
+
   // Method to test email configuration
   async testConnection(): Promise<boolean> {
     try {

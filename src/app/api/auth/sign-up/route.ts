@@ -86,6 +86,8 @@ export async function POST(request: NextRequest) {
           amount: 0, // Initial commission is 0 until they make purchases
           tokenAmount: 0,
           pricePerToken: 0,
+          commissionPercentage: 5.0, // Default commission percentage
+          status: "PENDING", // Initial status for new signups
           month: new Date().getMonth() + 1,
           year: new Date().getFullYear(),
         },

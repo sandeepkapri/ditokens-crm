@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
     const userStatus = {
       isActive: user.isActive,
       availableTokens: user.availableTokens || 0,
-      totalTokens: user.totalTokens || 0
+      totalTokens: user.totalTokens || 0,
+      usdtBalance: user.usdtBalance || 0
     };
 
     // If user is not active, return limited data
@@ -44,6 +45,7 @@ export async function GET(request: NextRequest) {
       totalValue: (user.totalTokens || 0) * currentPrice,
       stakedTokens: user.stakedTokens || 0,
       availableTokens: user.availableTokens || 0,
+      usdtBalance: user.usdtBalance || 0,
       totalEarnings: user.totalEarnings || 0,
       referralEarnings: user.referralEarnings || 0,
     };

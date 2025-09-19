@@ -11,7 +11,7 @@ export const NAV_DATA = [
         items: [],
       },
       {
-        title: "Token Management",
+        title: "DIT Tokens",
         icon: Icons.PieChart,
         items: [
           {
@@ -25,6 +25,24 @@ export const NAV_DATA = [
           {
             title: "Stake Tokens",
             url: "/dashboard/tokens/stake",
+          },
+          {
+            title: "Convert to USDT",
+            url: "/dashboard/wallets/withdrawal",
+          },
+        ],
+      },
+      {
+        title: "USDT Wallet",
+        icon: Icons.PieChart,
+        items: [
+          {
+            title: "Deposit USDT",
+            url: "/dashboard/wallets/deposit",
+          },
+          {
+            title: "Withdraw USDT",
+            url: "/dashboard/wallets/usdt-withdraw",
           },
         ],
       },
@@ -40,21 +58,6 @@ export const NAV_DATA = [
             title: "Referral History",
             url: "/dashboard/referrals/history",
           },
-        ],
-      },
-      {
-        title: "Wallets",
-        icon: Icons.PieChart,
-        items: [
-          {
-            title: "Deposit Wallet",
-            url: "/dashboard/wallets/deposit",
-          },
-          {
-            title: "Withdrawal Wallet",
-            url: "/dashboard/wallets/withdrawal",
-          },
-          
         ],
       },
       {

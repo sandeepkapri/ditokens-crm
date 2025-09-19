@@ -27,10 +27,11 @@ interface Transaction {
 export default function BuyTokensPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("usdt");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("usdt_balance");
   const [amount, setAmount] = useState<string>("");
   const [tokenAmount, setTokenAmount] = useState<number>(0);
   const [currentPrice, setCurrentPrice] = useState<number>(2.8);
+  const [usdtBalance, setUsdtBalance] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -39,6 +40,15 @@ export default function BuyTokensPage() {
   const [pendingTransaction, setPendingTransaction] = useState<any>(null);
 
   const paymentMethods: PaymentMethod[] = [
+    {
+      id: "usdt_balance",
+      name: "USDT Balance",
+      icon: "💰",
+      description: "Use your existing USDT balance",
+      processingTime: "Instant",
+      walletAddress: "",
+      qrCode: ""
+    },
     {
       id: "usdt",
       name: "USDT (ERC-20)",
@@ -57,7 +67,7 @@ export default function BuyTokensPage() {
     
     if (session?.user) {
       loadCurrentPrice();
-      loadTransactions();
+      loadPortfolioData();
     }
   }, [status, router, session]);
 
@@ -84,15 +94,16 @@ export default function BuyTokensPage() {
     }
   };
 
-  const loadTransactions = async () => {
+  const loadPortfolioData = async () => {
     try {
       const response = await fetch("/api/tokens/portfolio");
       if (response.ok) {
         const data = await response.json();
         setTransactions(data.recentTransactions || []);
+        setUsdtBalance(data.usdtBalance || 0);
       }
     } catch (error) {
-      console.error("Failed to load transactions:", error);
+      console.error("Failed to load portfolio data:", error);
     }
   };
 
@@ -120,31 +131,60 @@ export default function BuyTokensPage() {
       return;
     }
 
+    // Check USDT balance if using balance payment
+    if (selectedPaymentMethod === "usdt_balance" && parseFloat(amount) > usdtBalance) {
+      setError(`Insufficient USDT balance. Available: $${usdtBalance.toFixed(2)}`);
+      return;
+    }
+
     setIsLoading(true);
     setError("");
     setMessage("");
 
     try {
-      const response = await fetch("/api/tokens/purchase", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          amount: parseFloat(amount),
-          tokenAmount,
-          paymentMethod: selectedPaymentMethod,
-          currentPrice,
-        }),
-      });
+      let response;
+      
+      if (selectedPaymentMethod === "usdt_balance") {
+        // Purchase using USDT balance
+        response = await fetch("/api/tokens/purchase-from-balance", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount: parseFloat(amount),
+          }),
+        });
+      } else {
+        // External payment method
+        response = await fetch("/api/tokens/purchase", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            amount: parseFloat(amount),
+            tokenAmount,
+            paymentMethod: selectedPaymentMethod,
+            currentPrice,
+          }),
+        });
+      }
 
       const data = await response.json();
 
       if (response.ok) {
-        setPendingTransaction(data);
-        setShowPaymentInstructions(true);
-        setMessage("Purchase request created! Please make payment to complete your purchase.");
-        await loadTransactions(); // Refresh transactions
+        if (selectedPaymentMethod === "usdt_balance") {
+          // Instant purchase completed
+          setMessage(data.message || "Purchase completed successfully!");
+          await loadPortfolioData(); // Refresh transactions and USDT balance
+        } else {
+          // External payment - show instructions
+          setPendingTransaction(data);
+          setShowPaymentInstructions(true);
+          setMessage("Purchase request created! Please make payment to complete your purchase.");
+          await loadPortfolioData(); // Refresh transactions
+        }
       } else {
         setError(data.error || "Purchase failed");
       }
@@ -219,15 +259,27 @@ export default function BuyTokensPage() {
             </div>
 
             <div className="p-6">
-              {/* Current Price */}
-              <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                    Current DIT Price
-                  </span>
-                  <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">
-                    ${currentPrice.toFixed(2)}
-                  </span>
+              {/* Current Price and USDT Balance */}
+              <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      Current DIT Price
+                    </span>
+                    <span className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                      ${currentPrice.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-green-900 dark:text-green-100">
+                      USDT Balance
+                    </span>
+                    <span className="text-2xl font-bold text-green-900 dark:text-green-100">
+                      ${usdtBalance.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -250,23 +302,43 @@ export default function BuyTokensPage() {
                 )}
               </div>
 
-              {/* Payment Method Display */}
+              {/* Payment Method Selection */}
               <div className="mb-6">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   Payment Method
                 </label>
-                <div className="p-4 border border-primary bg-primary/5 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-2xl">₿</span>
-                    <div>
-                      <div className="font-medium text-black dark:text-white">
-                        USDT (ERC-20)
-                      </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Pay with USDT on Ethereum network
+                <div className="space-y-3">
+                  {paymentMethods.map((method) => (
+                    <div
+                      key={method.id}
+                      onClick={() => handlePaymentMethodSelect(method.id)}
+                      className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        selectedPaymentMethod === method.id
+                          ? "border-primary bg-primary/5"
+                          : "border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        <span className="text-2xl">{method.icon}</span>
+                        <div className="flex-1">
+                          <div className="font-medium text-black dark:text-white">
+                            {method.name}
+                          </div>
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
+                            {method.description}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                            Processing time: {method.processingTime}
+                          </div>
+                        </div>
+                        {method.id === "usdt_balance" && (
+                          <div className="text-sm text-green-600 dark:text-green-400 font-medium">
+                            ${usdtBalance.toFixed(2)} available
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
               </div>
 
@@ -276,7 +348,12 @@ export default function BuyTokensPage() {
                 disabled={isLoading || !amount || !selectedPaymentMethod}
                 className="w-full bg-primary text-white py-3 px-4 rounded-lg hover:bg-primary/90 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
               >
-                {isLoading ? "Processing..." : "Create Purchase Request"}
+                {isLoading 
+                  ? "Processing..." 
+                  : selectedPaymentMethod === "usdt_balance" 
+                    ? "Buy DIT Tokens Now" 
+                    : "Create Purchase Request"
+                }
               </button>
 
               {/* Messages */}
@@ -294,8 +371,8 @@ export default function BuyTokensPage() {
             </div>
           </div>
 
-          {/* Payment Instructions */}
-          {showPaymentInstructions && pendingTransaction && (
+          {/* Payment Instructions - Only for external payments */}
+          {showPaymentInstructions && pendingTransaction && selectedPaymentMethod !== "usdt_balance" && (
             <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-stroke-dark dark:bg-box-dark">
               <div className="p-6 border-b border-stroke dark:border-stroke-dark">
                 <h3 className="text-lg font-medium text-black dark:text-white">

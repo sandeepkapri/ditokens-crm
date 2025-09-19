@@ -52,17 +52,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Withdrawal request is not pending" }, { status: 400 });
     }
 
-    // Check if 3-year lock period has passed
-    const lockEndDate = new Date(withdrawalRequest.createdAt.getTime() + (3 * 365 * 24 * 60 * 60 * 1000));
-    const now = new Date();
-    
-    if (now < lockEndDate) {
-      const remainingDays = Math.ceil((lockEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
-      return NextResponse.json({
-        error: "3-year lock period has not ended",
-        remainingDays,
-        lockEndDate: lockEndDate.toISOString(),
-      }, { status: 400 });
+    // Check if lock period has passed (only for DIT token withdrawals)
+    if (withdrawalRequest.network !== "USDT" && withdrawalRequest.lockPeriod > 0) {
+      const lockEndDate = new Date(withdrawalRequest.createdAt.getTime() + (withdrawalRequest.lockPeriod * 365 * 24 * 60 * 60 * 1000));
+      const now = new Date();
+      
+      if (now < lockEndDate) {
+        const remainingDays = Math.ceil((lockEndDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+        return NextResponse.json({
+          error: `${withdrawalRequest.lockPeriod}-year lock period has not ended`,
+          remainingDays,
+          lockEndDate: lockEndDate.toISOString(),
+        }, { status: 400 });
+      }
     }
 
     let newStatus: string;
@@ -130,13 +132,24 @@ export async function POST(request: NextRequest) {
         },
       });
 
-      // Return tokens to user's available balance
-      await prisma.user.update({
-        where: { id: withdrawalRequest.userId },
-        data: {
-          availableTokens: { increment: withdrawalRequest.tokenAmount },
-        },
-      });
+      // Return funds to user's balance based on withdrawal type
+      if (withdrawalRequest.network === "USDT") {
+        // Return USDT to user's USDT balance
+        await prisma.user.update({
+          where: { id: withdrawalRequest.userId },
+          data: {
+            usdtBalance: { increment: withdrawalRequest.amount },
+          },
+        });
+      } else {
+        // Return DIT tokens to user's available balance
+        await prisma.user.update({
+          where: { id: withdrawalRequest.userId },
+          data: {
+            availableTokens: { increment: withdrawalRequest.tokenAmount },
+          },
+        });
+      }
 
       // Create notification for user
       await prisma.notification.create({

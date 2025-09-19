@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIT Purchase from USDT Balance - DiTokens CRM</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .success-message {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .purchase-details {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .purchase-header {
+            text-align: center;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .purchase-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px 0;
+        }
+        .purchase-row.total {
+            border-top: 2px solid #dee2e6;
+            padding-top: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .purchase-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .purchase-value {
+            color: #6c757d;
+        }
+        .total .purchase-value {
+            color: #2196f3;
+            font-size: 20px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+        .status-badge {
+            background-color: #2196f3;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .info-box {
+            background-color: #e8f5e8;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .balance-info {
+            background-color: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .purchase-flow {
+            background-color: #f3e5f5;
+            border: 1px solid #e1bee7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💎 DIT Purchase Confirmed!</h1>
+            <p>Your tokens have been purchased using USDT balance</p>
+        </div>
+        
+        <div class="content">
+            <div class="success-message">
+                <h2>Hello {{name}},</h2>
+                <p>Excellent! Your DIT token purchase has been completed successfully using your USDT balance. Your new tokens are now available in your account.</p>
+                <div class="status-badge">PURCHASED</div>
+            </div>
+            
+            <div class="purchase-details">
+                <div class="purchase-header">
+                    <h3>📄 Purchase Details</h3>
+                    <p style="color: #6c757d; margin: 0;">Transaction ID: {{transactionId}}</p>
+                </div>
+                
+                <div class="purchase-row">
+                    <span class="purchase-label">Purchase Date:</span>
+                    <span class="purchase-value">{{purchaseDate}}</span>
+                </div>
+                <div class="purchase-row">
+                    <span class="purchase-label">Payment Method:</span>
+                    <span class="purchase-value">USDT Balance</span>
+                </div>
+                <div class="purchase-row">
+                    <span class="purchase-label">DIT Token Price:</span>
+                    <span class="purchase-value">${{tokenPrice}}</span>
+                </div>
+                <div class="purchase-row">
+                    <span class="purchase-label">DIT Tokens Purchased:</span>
+                    <span class="purchase-value">{{tokens}} DIT</span>
+                </div>
+                <div class="purchase-row">
+                    <span class="purchase-label">USDT Amount Used:</span>
+                    <span class="purchase-value">{{usdtAmount}} USDT</span>
+                </div>
+                <div class="purchase-row">
+                    <span class="purchase-label">Processing Fee:</span>
+                    <span class="purchase-value">{{processingFee}} USDT</span>
+                </div>
+                <div class="purchase-row total">
+                    <span class="purchase-label">Total Cost:</span>
+                    <span class="purchase-value">{{totalAmount}} USDT</span>
+                </div>
+            </div>
+            
+            <div class="balance-info">
+                <h4>💰 Updated Balances:</h4>
+                <div style="display: flex; justify-content: space-between; margin: 15px 0;">
+                    <span style="font-weight: 600;">USDT Balance:</span>
+                    <span style="color: #2196f3; font-weight: bold;">{{remainingUsdtBalance}} USDT</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin: 15px 0;">
+                    <span style="font-weight: 600;">DIT Tokens:</span>
+                    <span style="color: #2196f3; font-weight: bold;">{{totalDitTokens}} DIT</span>
+                </div>
+            </div>
+            
+            <div class="purchase-flow">
+                <h4>🔄 Purchase Flow</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">💰</div>
+                        <div style="font-weight: bold;">{{usdtAmount}} USDT</div>
+                        <div style="font-size: 12px; color: #666;">From Balance</div>
+                    </div>
+                    <div style="font-size: 24px; color: #2196f3;">→</div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">💎</div>
+                        <div style="font-weight: bold;">{{tokens}} DIT</div>
+                        <div style="font-size: 12px; color: #666;">Tokens</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <h4>🚀 What you can do with your DIT tokens:</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li><strong>Stake:</strong> Earn rewards by staking your DIT tokens</li>
+                    <li><strong>Hold:</strong> Keep tokens for long-term investment</li>
+                    <li><strong>Convert:</strong> Convert DIT back to USDT when needed</li>
+                    <li><strong>Trade:</strong> Use tokens for various trading activities</li>
+                </ul>
+            </div>
+            
+            <div class="warning-box">
+                <h4>💡 Pro Tips:</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Consider staking your DIT tokens for passive income</li>
+                    <li>Monitor token prices for optimal buying/selling opportunities</li>
+                    <li>Diversify your portfolio with both USDT and DIT holdings</li>
+                    <li>Set up price alerts to stay informed about market changes</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{dashboardUrl}}" class="cta-button">View Portfolio →</a>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; text-align: center;">
+                <strong>Need help?</strong> Contact our support team at support@ditokens.com or visit our help center.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2024 DiTokens CRM. All rights reserved.</p>
+            <p style="font-size: 12px; color: #bdc3c7;">
+                This email confirms your DIT token purchase using USDT balance. Please keep it for your records.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

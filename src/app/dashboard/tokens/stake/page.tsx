@@ -16,6 +16,7 @@ interface StakingInfo {
 interface StakingRecord {
   id: string;
   amount: number;
+  stakingPeriod: number;
   startDate: string;
   endDate: string;
   status: "ACTIVE" | "COMPLETED" | "PENDING";
@@ -36,6 +37,7 @@ export default function StakeTokensPage() {
   });
   const [stakingRecords, setStakingRecords] = useState<StakingRecord[]>([]);
   const [stakeAmount, setStakeAmount] = useState<string>("");
+  const [stakingPeriod, setStakingPeriod] = useState<number>(3);
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
@@ -93,6 +95,7 @@ export default function StakeTokensPage() {
         },
         body: JSON.stringify({
           amount: parseFloat(stakeAmount),
+          stakingPeriod: stakingPeriod,
         }),
       });
 
@@ -292,12 +295,35 @@ export default function StakeTokensPage() {
                   </p>
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Staking Period
+                  </label>
+                  <select
+                    value={stakingPeriod}
+                    onChange={(e) => setStakingPeriod(parseInt(e.target.value))}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value={3}>3 Years</option>
+                    <option value={4}>4 Years</option>
+                    <option value={5}>5 Years</option>
+                    <option value={6}>6 Years</option>
+                    <option value={7}>7 Years</option>
+                    <option value={8}>8 Years</option>
+                    <option value={9}>9 Years</option>
+                    <option value={10}>10 Years</option>
+                  </select>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Choose your staking period (3-10 years)
+                  </p>
+                </div>
+
                 <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-md">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-gray-600 dark:text-gray-400">Lock Period:</span>
                       <span className="font-medium text-black dark:text-white">
-                        {Math.floor(stakingInfo.lockPeriod / 365)} years
+                        {stakingPeriod} years
                       </span>
                     </div>
                     <div className="flex justify-between">
@@ -346,7 +372,7 @@ export default function StakeTokensPage() {
                   <svg className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Minimum staking period: 3 years
+                  Staking period: 3-10 years (user selectable)
                 </li>
                 <li className="flex items-start">
                   <svg className="w-4 h-4 text-blue-500 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -387,6 +413,9 @@ export default function StakeTokensPage() {
                         Amount
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Period
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                         Start Date
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -405,6 +434,9 @@ export default function StakeTokensPage() {
                       <tr key={record.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                           {formatNumber(record.amount)} DIT
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                          {record.stakingPeriod} years
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                           {new Date(record.startDate).toLocaleDateString()}

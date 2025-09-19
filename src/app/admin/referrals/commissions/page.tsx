@@ -40,74 +40,30 @@ export default function CommissionTracking() {
 
   const loadCommissions = async () => {
     try {
-      // Mock data for demonstration
-      const mockCommissions: CommissionRecord[] = [
-        {
-          id: "comm_001",
-          referrerId: "user_001",
-          referrerEmail: "john.doe@example.com",
-          referredUserId: "user_002",
-          referredUserEmail: "jane.smith@example.com",
-          amount: 25.00,
-          isPaid: true,
-          month: 8,
-          year: 2025,
-          createdAt: "2025-08-15T10:30:00Z",
-          paidAt: "2025-08-20T14:15:00Z",
-        },
-        {
-          id: "comm_002",
-          referrerId: "user_003",
-          referrerEmail: "mike.johnson@example.com",
-          referredUserId: "user_004",
-          referredUserEmail: "sarah.wilson@example.com",
-          amount: 15.00,
-          isPaid: false,
-          month: 8,
-          year: 2025,
-          createdAt: "2025-08-18T16:45:00Z",
-        },
-        {
-          id: "comm_003",
-          referrerId: "user_005",
-          referrerEmail: "david.brown@example.com",
-          referredUserId: "user_006",
-          referredUserEmail: "emma.davis@example.com",
-          amount: 30.00,
-          isPaid: true,
-          month: 7,
-          year: 2025,
-          createdAt: "2025-07-25T11:20:00Z",
-          paidAt: "2025-08-01T09:30:00Z",
-        },
-        {
-          id: "comm_004",
-          referrerId: "user_001",
-          referrerEmail: "john.doe@example.com",
-          referredUserId: "user_007",
-          referredUserEmail: "alex.taylor@example.com",
-          amount: 20.00,
-          isPaid: false,
-          month: 8,
-          year: 2025,
-          createdAt: "2025-08-22T13:10:00Z",
-        },
-        {
-          id: "comm_005",
-          referrerId: "user_008",
-          referrerEmail: "lisa.garcia@example.com",
-          referredUserId: "user_009",
-          referredUserEmail: "tom.anderson@example.com",
-          amount: 35.00,
-          isPaid: true,
-          month: 7,
-          year: 2025,
-          createdAt: "2025-07-20T15:45:00Z",
-          paidAt: "2025-08-01T10:15:00Z",
-        },
-      ];
-
-      setCommissions(mockCommissions);
+      const response = await fetch("/api/admin/commissions");
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Transform the API data to match our interface
+        const transformedCommissions: CommissionRecord[] = data.commissions.map((comm: any) => ({
+          id: comm.id,
+          referrerId: comm.referrerId,
+          referrerEmail: comm.referrer.email,
+          referredUserId: comm.referredUserId,
+          referredUserEmail: comm.referredUser.email,
+          amount: comm.amount,
+          isPaid: comm.isPaid,
+          month: comm.month,
+          year: comm.year,
+          createdAt: comm.createdAt,
+          paidAt: comm.paidAt,
+        }));
+        
+        setCommissions(transformedCommissions);
+      } else {
+        console.error("Failed to load commissions:", response.statusText);
+      }
     } catch (error) {
       console.error("Error loading commissions:", error);
     } finally {
@@ -130,13 +86,25 @@ export default function CommissionTracking() {
 
   const handleMarkAsPaid = async (commissionId: string) => {
     try {
-      // Mock API call
-      setCommissions(prev => prev.map(comm => 
-        comm.id === commissionId 
-          ? { ...comm, isPaid: true, paidAt: new Date().toISOString() }
-          : comm
-      ));
-      alert("Commission marked as paid successfully!");
+      const response = await fetch("/api/admin/commissions/approve", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          commissionId,
+          action: "approve"
+        }),
+      });
+
+      if (response.ok) {
+        // Reload commissions to get updated data
+        loadCommissions();
+        alert("Commission marked as paid successfully!");
+      } else {
+        const error = await response.json();
+        alert(error.error || "Failed to update commission");
+      }
     } catch (error) {
       console.error("Error updating commission:", error);
       alert("Error updating commission");

@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
       settings = await prisma.commissionSettings.create({
         data: {
           referralRate: 5.0, // Only referral commission, no staking
-          updatedBy: session.user.email,
+          updatedBy: session.user.email || "system",
         }
       });
     }

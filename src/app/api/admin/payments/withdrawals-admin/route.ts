@@ -30,20 +30,25 @@ export async function GET(request: NextRequest) {
     });
 
     // Transform to match expected format
-    const requests = withdrawalRequests.map(txn => ({
-      id: txn.id,
-      userId: txn.userId,
-      userEmail: txn.user.email,
-      userName: txn.user.name,
-      amount: txn.tokenAmount, // Show DIT tokens, not USD value
-      usdAmount: txn.amount, // USD value for reference
-      network: txn.paymentMethod?.toLowerCase() || "usdt",
-      address: txn.walletAddress || "N/A",
-      status: txn.status,
-      fee: txn.processingFee || 0,
-      createdAt: txn.createdAt.toISOString(),
-      updatedAt: txn.updatedAt.toISOString(),
-    }));
+    const requests = withdrawalRequests.map(txn => {
+      const isUsdtWithdrawal = txn.paymentMethod === "USDT";
+      
+      return {
+        id: txn.id,
+        userId: txn.userId,
+        userEmail: txn.user.email,
+        userName: txn.user.name,
+        amount: isUsdtWithdrawal ? txn.amount : txn.tokenAmount, // For USDT: amount in USD, For DIT: tokenAmount
+        tokenAmount: isUsdtWithdrawal ? 0 : txn.tokenAmount, // For USDT: 0 tokens, For DIT: actual tokens
+        usdAmount: isUsdtWithdrawal ? txn.amount : txn.amount, // USD value for both
+        network: txn.paymentMethod || "USDT",
+        address: txn.walletAddress || "N/A",
+        status: txn.status,
+        fee: txn.processingFee || 0,
+        createdAt: txn.createdAt.toISOString(),
+        updatedAt: txn.updatedAt.toISOString(),
+      };
+    });
 
     return NextResponse.json({
       requests,

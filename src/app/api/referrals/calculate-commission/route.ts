@@ -43,17 +43,29 @@ export async function POST(request: NextRequest) {
     }
 
     // If user was referred, calculate and record commission
-    if (user.referredBy) {
+    if ((user as any).referredBy) {
       // Find the referrer
       const referrer = await prisma.user.findUnique({
-        where: { referralCode: user.referredBy },
+        where: { referralCode: (user as any).referredBy },
         select: { id: true },
       });
 
       if (referrer) {
-        // Calculate 5% commission
-        const commissionAmount = purchaseAmount * 0.05;
-        const commissionTokenAmount = tokenAmount * 0.05;
+        // Get current commission percentage from settings
+        let commissionSettings = await prisma.commissionSettings.findFirst();
+        if (!commissionSettings) {
+          // Create default settings if none exist
+          commissionSettings = await prisma.commissionSettings.create({
+        data: {
+          referralRate: 5.0,
+          updatedBy: session.user.email || "system",
+        }
+          });
+        }
+
+        const commissionPercentage = commissionSettings.referralRate / 100; // Convert percentage to decimal
+        const commissionAmount = purchaseAmount * commissionPercentage; // Commission in USDT
+        const commissionTokenAmount = tokenAmount * commissionPercentage; // Commission in DIT tokens (for reference)
 
         // Create or update commission record
         const currentMonth = new Date().getMonth() + 1;
@@ -76,6 +88,7 @@ export async function POST(request: NextRequest) {
               increment: commissionTokenAmount,
             },
             pricePerToken: pricePerToken,
+            commissionPercentage: commissionSettings.referralRate, // Save the percentage used
           },
           create: {
             referrerId: referrer.id,
@@ -83,6 +96,8 @@ export async function POST(request: NextRequest) {
             amount: commissionAmount,
             tokenAmount: commissionTokenAmount,
             pricePerToken: pricePerToken,
+            commissionPercentage: commissionSettings.referralRate, // Save the percentage used
+            status: "APPROVED", // Automatically approved when calculated
             month: currentMonth,
             year: currentYear,
           },
@@ -102,6 +117,7 @@ export async function POST(request: NextRequest) {
           message: "Commission calculated and recorded successfully",
           commissionAmount,
           commissionTokenAmount,
+          commissionPercentage: commissionSettings.referralRate,
         }, { status: 200 });
       }
     }

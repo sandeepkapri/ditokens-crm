@@ -55,17 +55,32 @@ export async function GET(request: NextRequest) {
       prisma.transaction.count({ where })
     ]);
 
+    // Get staking records for these transactions
+    const userIds = stakingTransactions.map(t => t.userId);
+    const stakingRecords = await prisma.stakingRecord.findMany({
+      where: { userId: { in: userIds } },
+      select: {
+        userId: true,
+        stakingPeriod: true,
+        startDate: true,
+        endDate: true
+      }
+    });
+
     // Calculate rewards for each staking transaction
     const rewards = stakingTransactions.map(transaction => {
       const stakingAmount = transaction.tokenAmount || 0;
       const apy = 12.5; // Default APY
-      const stakingPeriod = 3; // 3 years default
+      
+      // Find the staking record for this user
+      const stakingRecord = stakingRecords.find(record => record.userId === transaction.userId);
+      const stakingPeriod = stakingRecord?.stakingPeriod || 3; // Use actual staking period or default to 3
+      
       const rewards = (stakingAmount * apy / 100) / 12; // Monthly rewards
       const totalRewardsEarned = rewards; // Simplified calculation
       
       const startDate = transaction.createdAt;
-      const endDate = new Date(startDate);
-      endDate.setFullYear(endDate.getFullYear() + stakingPeriod);
+      const endDate = stakingRecord?.endDate || new Date(startDate.getTime() + (stakingPeriod * 365 * 24 * 60 * 60 * 1000));
       
       const lastRewardDate = new Date();
       lastRewardDate.setMonth(lastRewardDate.getMonth() - 1);

@@ -12,6 +12,7 @@ interface UserStats {
   totalTokens: number;
   stakedTokens: number;
   availableTokens: number;
+  usdtBalance: number;
   totalEarnings: number; // Only price income, no staking rewards
   referralEarnings: number;
   isActive: boolean;
@@ -41,6 +42,7 @@ export default function Dashboard() {
   const [tokenPrices, setTokenPrices] = useState<TokenPrice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPrice, setCurrentPrice] = useState(2.80);
+  const [commissionPercentage, setCommissionPercentage] = useState(5.0);
   const [databaseError, setDatabaseError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
 
@@ -71,11 +73,12 @@ export default function Dashboard() {
     try {
       setDatabaseError(null); // Reset error state
       
-      const [portfolioResponse, withdrawalsResponse, pricesResponse, currentPriceResponse] = await Promise.all([
+      const [portfolioResponse, withdrawalsResponse, pricesResponse, currentPriceResponse, commissionResponse] = await Promise.all([
         fetch("/api/tokens/portfolio"),
         fetch("/api/tokens/withdrawals"),
         fetch("/api/tokens/price"),
-        fetch("/api/tokens/current-price")
+        fetch("/api/tokens/current-price"),
+        fetch("/api/admin/commission-settings")
       ]);
 
       // Check for database errors in portfolio response
@@ -120,6 +123,12 @@ export default function Dashboard() {
         const currentPriceData = await currentPriceResponse.json();
         console.log('Current price API response:', currentPriceData);
         setCurrentPrice(currentPriceData.price || 2.80);
+      }
+
+      // Get commission percentage
+      if (commissionResponse.ok) {
+        const commissionData = await commissionResponse.json();
+        setCommissionPercentage(commissionData.settings?.referralRate || 5.0);
       }
     } catch (error) {
       console.error("Error loading dashboard data:", error);
@@ -274,105 +283,122 @@ export default function Dashboard() {
 
 
       {/* Token Balance Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+        <div className="rounded-lg border border-stroke bg-white p-4 shadow-sm dark:border-strokedark dark:bg-boxdark">
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-black dark:text-white mb-2">
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
               Total Tokens
             </h3>
-            <div className="text-3xl font-bold text-blue-600 mb-2">
+            <div className="text-2xl font-bold text-blue-600 mb-1">
               {userStats?.totalTokens?.toLocaleString() || "0"}
             </div>
-            <div className="text-lg font-medium text-gray-600 dark:text-gray-400">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
               ${totalValue.toLocaleString()}
             </div>
-            <p className="text-sm text-gray-500 mt-1">
-              Your complete token holdings
+            <p className="text-xs text-gray-500">
+              Complete holdings
             </p>
           </div>
         </div>
 
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+        <div className="rounded-lg border border-stroke bg-white p-4 shadow-sm dark:border-strokedark dark:bg-boxdark">
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-black dark:text-white mb-2">
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
               Available Tokens
             </h3>
-            <div className="text-3xl font-bold text-green-600 mb-2">
+            <div className="text-2xl font-bold text-green-600 mb-1">
               {userStats?.availableTokens?.toLocaleString() || "0"}
             </div>
-            <div className="text-lg font-medium text-gray-600 dark:text-gray-400">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
               ${availableValue.toLocaleString()}
             </div>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-xs text-gray-500">
               Ready for withdrawal
             </p>
           </div>
         </div>
 
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+        <div className="rounded-lg border border-stroke bg-white p-4 shadow-sm dark:border-strokedark dark:bg-boxdark">
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-black dark:text-white mb-2">
-              Staked Tokens
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+              USDT Balance
             </h3>
-            <div className="text-3xl font-bold text-purple-600 mb-2">
-              {userStats?.stakedTokens?.toLocaleString() || "0"}
+            <div className="text-2xl font-bold text-orange-600 mb-1">
+              ${(userStats?.usdtBalance || 0).toLocaleString()}
             </div>
-            <div className="text-lg font-medium text-gray-600 dark:text-gray-400">
-              ${stakedValue.toLocaleString()}
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              Available for withdrawal
             </div>
-            <p className="text-sm text-gray-500 mt-1">
-              Locked in staking (no income)
+            <p className="text-xs text-gray-500">
+              Deposit/Withdrawal only
             </p>
           </div>
         </div>
 
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+        <div className="rounded-lg border border-stroke bg-white p-4 shadow-sm dark:border-strokedark dark:bg-boxdark">
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-black dark:text-white mb-2">
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
+              Staked Tokens
+            </h3>
+            <div className="text-2xl font-bold text-purple-600 mb-1">
+              {userStats?.stakedTokens?.toLocaleString() || "0"}
+            </div>
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+              ${stakedValue.toLocaleString()}
+            </div>
+            <p className="text-xs text-gray-500">
+              Locked in staking
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-lg border border-stroke bg-white p-4 shadow-sm dark:border-strokedark dark:bg-boxdark">
+          <div className="text-center">
+            <h3 className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2">
               Total Earnings
             </h3>
-            <div className="text-3xl font-bold text-orange-600 mb-2">
+            <div className="text-2xl font-bold text-emerald-600 mb-1">
               ${(userStats?.totalEarnings || 0).toLocaleString()}
             </div>
-            <div className="text-lg font-medium text-gray-600 dark:text-gray-400">
+            <div className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
               Referral: ${(userStats?.referralEarnings || 0).toLocaleString()}
             </div>
-            <p className="text-sm text-gray-500 mt-1">
-              Price income only - no staking rewards
+            <p className="text-xs text-gray-500">
+              Price income only
             </p>
           </div>
         </div>
       </div>
 
       {/* Token Supply Status */}
-      <div className="mb-8 rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+      <div className="mb-8 rounded-lg border border-stroke bg-white p-6 shadow-sm dark:border-strokedark dark:bg-boxdark">
         <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
-          🪙 Token Supply Status (50M Total Limit)
+          Token Supply Status
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">50.0M</div>
-            <div className="text-sm text-gray-500">Total Supply</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600 mb-1">50.0M</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Total Supply</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">~2.5M</div>
-            <div className="text-sm text-gray-500">Tokens Sold</div>
+          <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+            <div className="text-2xl font-bold text-green-600 mb-1">~2.5M</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Tokens Sold</div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">~47.5M</div>
-            <div className="text-sm text-gray-500">Available for Sale</div>
+          <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+            <div className="text-2xl font-bold text-orange-600 mb-1">~47.5M</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">Available for Sale</div>
           </div>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-3 dark:bg-gray-700">
+        <div className="w-full bg-gray-200 rounded-full h-4 dark:bg-gray-700 mb-3">
           <div 
-            className="bg-blue-600 h-3 rounded-full"
+            className="bg-gradient-to-r from-blue-500 to-blue-600 h-4 rounded-full transition-all duration-300"
             style={{ width: '5%' }}
           ></div>
         </div>
-        <div className="text-center text-sm text-gray-500 mt-2">
+        <div className="text-center text-sm text-gray-600 dark:text-gray-400 mb-4">
           5% of total supply utilized
         </div>
-        <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <div className="text-sm text-blue-700 dark:text-blue-300 text-center">
             <strong>System Limit:</strong> Maximum 50,000,000 tokens can ever exist
           </div>
@@ -380,9 +406,9 @@ export default function Dashboard() {
       </div>
 
       {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Token Price Trend Chart */}
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+        <div className="rounded-lg border border-stroke bg-white p-6 shadow-sm dark:border-strokedark dark:bg-boxdark">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Token Price Trend
           </h3>
@@ -432,7 +458,7 @@ export default function Dashboard() {
         </div>
 
         {/* Portfolio Distribution Chart */}
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+        <div className="rounded-lg border border-stroke bg-white p-6 shadow-sm dark:border-strokedark dark:bg-boxdark">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Portfolio Distribution
           </h3>
@@ -576,7 +602,7 @@ export default function Dashboard() {
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+        <div className="rounded-lg border border-stroke bg-white p-6 shadow-sm dark:border-strokedark dark:bg-boxdark">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Quick Actions
           </h3>
@@ -584,85 +610,94 @@ export default function Dashboard() {
           <div className="space-y-3">
             <button
               onClick={() => router.push("/dashboard/tokens/buy")}
-              className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
             >
-              💰 Purchase Tokens
+              💰 Purchase DIT Tokens
             </button>
+            
+            {userStats?.usdtBalance && userStats.usdtBalance > 0 && (
+              <button
+                onClick={() => router.push("/dashboard/wallets/usdt-withdraw")}
+                className="w-full px-4 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 transition-colors"
+              >
+                💸 Withdraw USDT
+              </button>
+            )}
             
             {userStats?.availableTokens && userStats.availableTokens > 0 && (
               <button
                 onClick={() => router.push("/dashboard/wallets/withdrawal")}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+                className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 transition-colors"
               >
-                💸 Request Withdrawal
+                💸 Convert DIT to USDT
               </button>
             )}
             
             <button
               onClick={() => router.push("/dashboard/referrals/link")}
-              className="w-full px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-colors"
             >
               🎯 Referral Program
             </button>
           </div>
         </div>
 
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+        <div className="rounded-lg border border-stroke bg-white p-6 shadow-sm dark:border-strokedark dark:bg-boxdark">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Account Summary
           </h3>
           
-          <div className="space-y-3 text-sm">
-            <div className="flex justify-between">
+          <div className="space-y-4 text-sm">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
               <span className="text-gray-600 dark:text-gray-400">Account Status:</span>
-              <span className={`font-medium ${
-                userStats?.isActive ? "text-green-600" : "text-red-600"
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                userStats?.isActive ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
               }`}>
                 {userStats?.isActive ? "Active" : "Inactive"}
               </span>
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
               <span className="text-gray-600 dark:text-gray-400">Total Value:</span>
-              <span className="font-medium">${totalValue.toLocaleString()}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">${totalValue.toLocaleString()}</span>
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-700">
               <span className="text-gray-600 dark:text-gray-400">Referral Earnings:</span>
-              <span className="font-medium">${(userStats?.referralEarnings || 0).toLocaleString()}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">${(userStats?.referralEarnings || 0).toLocaleString()}</span>
             </div>
             
-            <div className="flex justify-between">
+            <div className="flex justify-between items-center py-2">
               <span className="text-gray-600 dark:text-gray-400">Pending Withdrawals:</span>
-              <span className="font-medium">{withdrawalRequests.filter(w => w.status === "PENDING").length}</span>
+              <span className="font-semibold text-gray-900 dark:text-white">{withdrawalRequests.filter(w => w.status === "PENDING").length}</span>
             </div>
           </div>
         </div>
 
-        <div className="rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+        <div className="rounded-lg border border-stroke bg-white p-6 shadow-sm dark:border-strokedark dark:bg-boxdark">
           <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
             Important Notes
           </h3>
           
-          <div className="space-y-3 text-sm text-gray-600 dark:text-gray-400">
-            <div className="flex items-start">
-              <span className="text-red-500 mr-2">⚠️</span>
-              <span>No staking income is generated</span>
+          <div className="space-y-4 text-sm">
+            <div className="flex items-start p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+              <span className="text-red-500 mr-3 mt-0.5">⚠️</span>
+              <span className="text-red-700 dark:text-red-300">No staking income is generated</span>
             </div>
             
-            <div className="flex items-start">
-              <span className="text-blue-500 mr-2">ℹ️</span>
-              <span>5% referral commission on first deposits</span>
+            <div className="flex items-start p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+              <span className="text-blue-500 mr-3 mt-0.5">ℹ️</span>
+              <span className="text-blue-700 dark:text-blue-300">{commissionPercentage}% referral commission on first deposits</span>
             </div>
             
-            <div className="flex items-start">
-              <span className="text-orange-500 mr-2">🔒</span>
-              <span>3-year lock period for all withdrawals</span>
+            <div className="flex items-start p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+              <span className="text-orange-500 mr-3 mt-0.5">🔒</span>
+              <span className="text-orange-700 dark:text-orange-300">3-year lock period for all withdrawals</span>
             </div>
             
-            <div className="flex items-start">
-              <span className="text-green-500 mr-2">✅</span>
-              <span>Users are inactive by default</span>
+            <div className="flex items-start p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+              <span className="text-green-500 mr-3 mt-0.5">✅</span>
+              <span className="text-green-700 dark:text-green-300">Users are inactive by default</span>
             </div>
           </div>
         </div>

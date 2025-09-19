@@ -3,7 +3,7 @@ import { prisma } from './prisma';
 
 export interface EmailEventData {
   userId: string;
-  eventType: 'signup' | 'login' | 'payment' | 'purchase' | 'stake' | 'password-reset' | 'notification';
+  eventType: 'signup' | 'login' | 'payment' | 'purchase' | 'stake' | 'password-reset' | 'notification' | 'usdt-deposit' | 'usdt-withdrawal' | 'dit-conversion' | 'dit-purchase-balance';
   metadata?: Record<string, any>;
 }
 
@@ -835,6 +835,223 @@ export class EmailEventManager {
   }
 
   /**
+   * Handle USDT deposit confirmation
+   */
+  static async handleUsdtDepositConfirmation(
+    userId: string,
+    depositData: {
+      email: string;
+      name: string;
+      amount: string;
+      transactionId: string;
+      network: string;
+      fromWallet: string;
+      txHash: string;
+      depositDate: string;
+    }
+  ) {
+    try {
+      const success = await emailService.sendUsdtDepositConfirmation(
+        depositData.email,
+        depositData.name,
+        depositData.amount,
+        depositData.transactionId,
+        depositData.network,
+        depositData.fromWallet,
+        depositData.txHash,
+        depositData.depositDate
+      );
+      
+      if (success) {
+        console.log(`USDT deposit confirmation sent to ${depositData.email}`);
+      } else {
+        console.error(`Failed to send USDT deposit confirmation to ${depositData.email}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error sending USDT deposit confirmation:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle USDT withdrawal request
+   */
+  static async handleUsdtWithdrawalRequest(
+    userId: string,
+    withdrawalData: {
+      email: string;
+      name: string;
+      amount: string;
+      network: string;
+      walletAddress: string;
+      withdrawalId: string;
+      requestDate: string;
+      processingFee: string;
+      totalAmount: string;
+    }
+  ) {
+    try {
+      const success = await emailService.sendUsdtWithdrawalRequest(
+        withdrawalData.email,
+        withdrawalData.name,
+        withdrawalData.amount,
+        withdrawalData.network,
+        withdrawalData.walletAddress,
+        withdrawalData.withdrawalId,
+        withdrawalData.requestDate,
+        withdrawalData.processingFee,
+        withdrawalData.totalAmount
+      );
+      
+      if (success) {
+        console.log(`USDT withdrawal request sent to ${withdrawalData.email}`);
+      } else {
+        console.error(`Failed to send USDT withdrawal request to ${withdrawalData.email}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error sending USDT withdrawal request:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle USDT withdrawal approved
+   */
+  static async handleUsdtWithdrawalApproved(
+    userId: string,
+    withdrawalData: {
+      email: string;
+      name: string;
+      amount: string;
+      network: string;
+      walletAddress: string;
+      transactionId: string;
+      approvalDate: string;
+      processingFee: string;
+      networkFee: string;
+      totalAmount: string;
+    }
+  ) {
+    try {
+      const success = await emailService.sendUsdtWithdrawalApproved(
+        withdrawalData.email,
+        withdrawalData.name,
+        withdrawalData.amount,
+        withdrawalData.network,
+        withdrawalData.walletAddress,
+        withdrawalData.transactionId,
+        withdrawalData.approvalDate,
+        withdrawalData.processingFee,
+        withdrawalData.networkFee,
+        withdrawalData.totalAmount
+      );
+      
+      if (success) {
+        console.log(`USDT withdrawal approved sent to ${withdrawalData.email}`);
+      } else {
+        console.error(`Failed to send USDT withdrawal approved to ${withdrawalData.email}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error sending USDT withdrawal approved:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle DIT to USDT conversion confirmation
+   */
+  static async handleDitToUsdtConversion(
+    userId: string,
+    conversionData: {
+      email: string;
+      name: string;
+      ditAmount: string;
+      usdtAmount: string;
+      exchangeRate: string;
+      conversionFee: string;
+      transactionId: string;
+      conversionDate: string;
+    }
+  ) {
+    try {
+      const success = await emailService.sendDitToUsdtConversion(
+        conversionData.email,
+        conversionData.name,
+        conversionData.ditAmount,
+        conversionData.usdtAmount,
+        conversionData.exchangeRate,
+        conversionData.conversionFee,
+        conversionData.transactionId,
+        conversionData.conversionDate
+      );
+      
+      if (success) {
+        console.log(`DIT to USDT conversion confirmation sent to ${conversionData.email}`);
+      } else {
+        console.error(`Failed to send DIT to USDT conversion confirmation to ${conversionData.email}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error sending DIT to USDT conversion confirmation:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Handle DIT purchase from USDT balance
+   */
+  static async handleDitPurchaseFromBalance(
+    userId: string,
+    purchaseData: {
+      email: string;
+      name: string;
+      tokens: string;
+      usdtAmount: string;
+      tokenPrice: string;
+      processingFee: string;
+      totalAmount: string;
+      transactionId: string;
+      purchaseDate: string;
+      remainingUsdtBalance: string;
+      totalDitTokens: string;
+    }
+  ) {
+    try {
+      const success = await emailService.sendDitPurchaseFromBalance(
+        purchaseData.email,
+        purchaseData.name,
+        purchaseData.tokens,
+        purchaseData.usdtAmount,
+        purchaseData.tokenPrice,
+        purchaseData.processingFee,
+        purchaseData.totalAmount,
+        purchaseData.transactionId,
+        purchaseData.purchaseDate,
+        purchaseData.remainingUsdtBalance,
+        purchaseData.totalDitTokens
+      );
+      
+      if (success) {
+        console.log(`DIT purchase from balance confirmation sent to ${purchaseData.email}`);
+      } else {
+        console.error(`Failed to send DIT purchase from balance confirmation to ${purchaseData.email}`);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error sending DIT purchase from balance confirmation:', error);
+      return false;
+    }
+  }
+
+  /**
    * Test email service connection
    */
   static async testEmailService(): Promise<boolean> {
@@ -868,3 +1085,10 @@ export const sendPurchasePendingAdmin = EmailEventManager.handlePurchasePendingA
 export const sendNotification = EmailEventManager.handleNotification;
 export const sendBulkNotifications = EmailEventManager.sendBulkNotifications;
 export const testEmailService = EmailEventManager.testEmailService;
+
+// New USDT and DIT convenience functions
+export const sendUsdtDepositConfirmation = EmailEventManager.handleUsdtDepositConfirmation;
+export const sendUsdtWithdrawalRequest = EmailEventManager.handleUsdtWithdrawalRequest;
+export const sendUsdtWithdrawalApproved = EmailEventManager.handleUsdtWithdrawalApproved;
+export const sendDitToUsdtConversion = EmailEventManager.handleDitToUsdtConversion;
+export const sendDitPurchaseFromBalance = EmailEventManager.handleDitPurchaseFromBalance;

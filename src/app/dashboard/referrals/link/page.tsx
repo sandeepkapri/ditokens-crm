@@ -83,7 +83,7 @@ export default function ReferralLinkPage() {
             Referral Program
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Invite friends and earn 5% commission on their token purchases
+            Invite friends and earn commission on their token purchases
           </p>
         </div>
 
@@ -232,7 +232,7 @@ export default function ReferralLinkPage() {
               </div>
               <h4 className="font-medium text-black dark:text-white mb-2">Earn Commission</h4>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Get 5% commission on all their token purchases, paid monthly
+                Get commission on all their token purchases, paid monthly
               </p>
             </div>
           </div>

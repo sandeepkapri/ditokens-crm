@@ -24,6 +24,7 @@ model User {
   totalTokens             Float                @default(0)
   stakedTokens            Float                @default(0)
   availableTokens         Float                @default(0)
+  usdtBalance             Float                @default(0) // USDT balance for purchases
   totalEarnings           Float                @default(0)
   referralEarnings        Float                @default(0)
   createdAt               DateTime             @default(now())
@@ -59,17 +60,18 @@ model TokenPrice {
 }
 
 model StakingRecord {
-  id        String   @id @default(cuid())
-  userId    String
-  amount    Float
-  startDate DateTime @default(now())
-  endDate   DateTime
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  apy       Float    @default(0)
-  rewards   Float    @default(0)
-  status    String   @default("ACTIVE")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String   @id @default(cuid())
+  userId        String
+  amount        Float
+  stakingPeriod Int      @default(3) // Staking period in years (3-10)
+  startDate     DateTime @default(now())
+  endDate       DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  apy           Float    @default(0)
+  rewards       Float    @default(0)
+  status        String   @default("ACTIVE")
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId], map: "staking_records_userId_fkey")
   @@map("staking_records")
@@ -98,19 +100,24 @@ model Transaction {
 }
 
 model ReferralCommission {
-  id             String    @id @default(cuid())
-  referrerId     String
-  referredUserId String
-  amount         Float
-  tokenAmount    Float
-  pricePerToken  Float
-  isPaid         Boolean   @default(false)
-  paidAt         DateTime?
-  month          Int
-  year           Int
-  createdAt      DateTime  @default(now())
-  referredUser   User      @relation("ReferredUserCommissions", fields: [referredUserId], references: [id], onDelete: Cascade)
-  referrer       User      @relation("ReferrerCommissions", fields: [referrerId], references: [id], onDelete: Cascade)
+  id                  String    @id @default(cuid())
+  referrerId          String
+  referredUserId      String
+  amount              Float     // Commission amount in USDT
+  tokenAmount         Float     // Commission amount in DIT tokens (for reference)
+  pricePerToken       Float     // Token price at time of transaction
+  commissionPercentage Float    // Commission percentage at time of transaction (e.g., 5.0 for 5%)
+  status              String    @default("APPROVED") // APPROVED, REJECTED, PENDING
+  isPaid              Boolean   @default(false)
+  paidAt              DateTime?
+  rejectedAt          DateTime?
+  rejectedBy          String?
+  rejectionReason     String?
+  month               Int
+  year                Int
+  createdAt           DateTime  @default(now())
+  referredUser        User      @relation("ReferredUserCommissions", fields: [referredUserId], references: [id], onDelete: Cascade)
+  referrer            User      @relation("ReferrerCommissions", fields: [referrerId], references: [id], onDelete: Cascade)
 
   @@unique([referrerId, referredUserId, month, year], name: "referrer_referred_month_year")
   @@index([referredUserId], map: "referral_commissions_referredUserId_fkey")

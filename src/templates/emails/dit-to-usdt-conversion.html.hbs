@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIT to USDT Conversion Confirmed - DiTokens CRM</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+        }
+        .content {
+            padding: 40px 30px;
+        }
+        .success-message {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .conversion-details {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 30px 0;
+        }
+        .conversion-header {
+            text-align: center;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .conversion-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 10px 0;
+        }
+        .conversion-row.total {
+            border-top: 2px solid #dee2e6;
+            padding-top: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        .conversion-label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .conversion-value {
+            color: #6c757d;
+        }
+        .total .conversion-value {
+            color: #9c27b0;
+            font-size: 20px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #9c27b0 0%, #ba68c8 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .footer {
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            padding: 30px;
+        }
+        .status-badge {
+            background-color: #9c27b0;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        .info-box {
+            background-color: #e8f5e8;
+            border: 1px solid #c8e6c9;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .warning-box {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .conversion-flow {
+            background-color: #f3e5f5;
+            border: 1px solid #e1bee7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔄 Conversion Confirmed!</h1>
+            <p>Your DIT tokens have been converted to USDT</p>
+        </div>
+        
+        <div class="content">
+            <div class="success-message">
+                <h2>Hello {{name}},</h2>
+                <p>Perfect! Your DIT to USDT conversion has been completed successfully. Your DIT tokens have been converted and added to your USDT balance.</p>
+                <div class="status-badge">CONVERTED</div>
+            </div>
+            
+            <div class="conversion-details">
+                <div class="conversion-header">
+                    <h3>💱 Conversion Details</h3>
+                    <p style="color: #6c757d; margin: 0;">Transaction ID: {{transactionId}}</p>
+                </div>
+                
+                <div class="conversion-row">
+                    <span class="conversion-label">Conversion Date:</span>
+                    <span class="conversion-value">{{conversionDate}}</span>
+                </div>
+                <div class="conversion-row">
+                    <span class="conversion-label">DIT Tokens Converted:</span>
+                    <span class="conversion-value">{{ditAmount}} DIT</span>
+                </div>
+                <div class="conversion-row">
+                    <span class="conversion-label">Exchange Rate:</span>
+                    <span class="conversion-value">1 DIT = ${{exchangeRate}}</span>
+                </div>
+                <div class="conversion-row">
+                    <span class="conversion-label">Conversion Fee:</span>
+                    <span class="conversion-value">{{conversionFee}} USDT</span>
+                </div>
+                <div class="conversion-row total">
+                    <span class="conversion-label">USDT Received:</span>
+                    <span class="conversion-value">{{usdtAmount}} USDT</span>
+                </div>
+            </div>
+            
+            <div class="conversion-flow">
+                <h4>🔄 Conversion Flow</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">💎</div>
+                        <div style="font-weight: bold;">{{ditAmount}} DIT</div>
+                    </div>
+                    <div style="font-size: 24px; color: #9c27b0;">→</div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 24px; margin-bottom: 10px;">💰</div>
+                        <div style="font-weight: bold;">{{usdtAmount}} USDT</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="info-box">
+                <h4>💡 What you can do with your USDT:</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li><strong>Withdraw:</strong> Convert your USDT to external wallets</li>
+                    <li><strong>Purchase DIT:</strong> Use USDT to buy more DIT tokens</li>
+                    <li><strong>Hold:</strong> Keep USDT in your account for future use</li>
+                    <li><strong>Trade:</strong> Use USDT for other trading activities</li>
+                </ul>
+            </div>
+            
+            <div class="warning-box">
+                <h4>⚠️ Important Notes:</h4>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Conversion is irreversible - DIT tokens cannot be recovered</li>
+                    <li>USDT balance is separate from DIT token holdings</li>
+                    <li>Conversion rates may vary based on market conditions</li>
+                    <li>Small conversion fees may apply to cover processing costs</li>
+                </ul>
+            </div>
+            
+            <div style="text-align: center;">
+                <a href="{{dashboardUrl}}" class="cta-button">View Dashboard →</a>
+            </div>
+            
+            <p style="color: #666; font-size: 14px; text-align: center;">
+                <strong>Need help?</strong> Contact our support team at support@ditokens.com or visit our help center.
+            </p>
+        </div>
+        
+        <div class="footer">
+            <p>© 2024 DiTokens CRM. All rights reserved.</p>
+            <p style="font-size: 12px; color: #bdc3c7;">
+                This email confirms your DIT to USDT conversion. Please keep it for your records.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

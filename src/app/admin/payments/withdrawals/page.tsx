@@ -10,8 +10,9 @@ interface WithdrawalRequest {
   userId: string;
   userEmail: string;
   userName: string;
-  amount: number; // DIT tokens
-  usdAmount?: number; // USD value
+  amount: number; // Amount in USD (for USDT) or DIT tokens (for DIT)
+  tokenAmount?: number; // DIT tokens (for DIT withdrawals)
+  usdAmount?: number; // USD value (for DIT withdrawals)
   network: string;
   address: string;
   status: "PENDING" | "APPROVED" | "REJECTED" | "PROCESSING";
@@ -26,6 +27,7 @@ export default function AdminWithdrawalsPage() {
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterType, setFilterType] = useState("all"); // all, usdt, dit
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -80,9 +82,14 @@ export default function AdminWithdrawalsPage() {
     }
   };
 
-  const filteredWithdrawals = withdrawalRequests.filter(request => 
-    filterStatus === "all" || request.status === filterStatus.toUpperCase()
-  );
+  const filteredWithdrawals = withdrawalRequests.filter(request => {
+    const matchesStatus = filterStatus === "all" || request.status === filterStatus.toUpperCase();
+    const matchesType = filterType === "all" || 
+      (filterType === "usdt" && request.network === "USDT") ||
+      (filterType === "dit" && request.network !== "USDT");
+    
+    return matchesStatus && matchesType;
+  });
 
   if (status === "loading" || isLoading) {
     return (
@@ -118,7 +125,7 @@ export default function AdminWithdrawalsPage() {
                   Pending Withdrawals
                 </p>
                 <p className="text-2xl font-bold text-black dark:text-white">
-                  {withdrawalRequests.filter(r => r.status === "PENDING").length}
+                  {filteredWithdrawals.filter(r => r.status === "PENDING").length}
                 </p>
               </div>
               <div className="p-3 bg-yellow-100 dark:bg-yellow-900 rounded-full">
@@ -136,7 +143,7 @@ export default function AdminWithdrawalsPage() {
                   Total Withdrawals
                 </p>
                 <p className="text-2xl font-bold text-black dark:text-white">
-                  {withdrawalRequests.length}
+                  {filteredWithdrawals.length}
                 </p>
               </div>
               <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-full">
@@ -154,7 +161,7 @@ export default function AdminWithdrawalsPage() {
                   Approved Today
                 </p>
                 <p className="text-2xl font-bold text-black dark:text-white">
-                  {withdrawalRequests.filter(r => 
+                  {filteredWithdrawals.filter(r => 
                     r.status === "APPROVED" && 
                     new Date(r.createdAt).toDateString() === new Date().toDateString()
                   ).length}
@@ -175,9 +182,13 @@ export default function AdminWithdrawalsPage() {
                   Pending Amount
                 </p>
                 <p className="text-2xl font-bold text-black dark:text-white">
-                  ${withdrawalRequests
+                  ${filteredWithdrawals
                     .filter(r => r.status === "PENDING")
-                    .reduce((sum, r) => sum + r.amount, 0)
+                    .reduce((sum, r) => {
+                      // For USDT withdrawals, amount is already in USD
+                      // For DIT withdrawals, use usdAmount or amount
+                      return sum + (r.network === "USDT" ? r.amount : (r.usdAmount || r.amount));
+                    }, 0)
                     .toFixed(2)}
                 </p>
               </div>
@@ -196,17 +207,28 @@ export default function AdminWithdrawalsPage() {
             <h3 className="text-lg font-medium text-black dark:text-white">
               Withdrawal Requests
             </h3>
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="processing">Processing</option>
-            </select>
+            <div className="flex space-x-4">
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="all">All Types</option>
+                <option value="usdt">USDT Only</option>
+                <option value="dit">DIT Only</option>
+              </select>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary focus:outline-none dark:border-gray-600 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="all">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="processing">Processing</option>
+              </select>
+            </div>
           </div>
 
           <div className="rounded-sm border border-stroke bg-white shadow-default dark:border-stroke-dark dark:bg-box-dark">
@@ -251,12 +273,20 @@ export default function AdminWithdrawalsPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        <div className="font-medium">
-                          {request.amount.toFixed(2)} DIT
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          ${request.usdAmount?.toFixed(2) || '0.00'} USD
-                        </div>
+                        {request.network === "USDT" ? (
+                          <div className="font-medium">
+                            ${request.amount.toFixed(2)} USDT
+                          </div>
+                        ) : (
+                          <>
+                            <div className="font-medium">
+                              {request.tokenAmount?.toFixed(2) || request.amount.toFixed(2)} DIT
+                            </div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                              ${request.usdAmount?.toFixed(2) || request.amount.toFixed(2)} USD
+                            </div>
+                          </>
+                        )}
                         <div className="text-xs text-gray-500 dark:text-gray-400">
                           Fee: ${request.fee.toFixed(2)}
                         </div>
@@ -278,7 +308,19 @@ export default function AdminWithdrawalsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {new Date(request.createdAt).toLocaleDateString()}
+                        <div className="text-gray-900 dark:text-white">
+                          {new Date(request.createdAt).toLocaleDateString()}
+                        </div>
+                        {request.status === "APPROVED" && (
+                          <div className="text-xs text-green-600 dark:text-green-400">
+                            Approved: {new Date(request.updatedAt).toLocaleDateString()}
+                          </div>
+                        )}
+                        {request.status === "REJECTED" && (
+                          <div className="text-xs text-red-600 dark:text-red-400">
+                            Rejected: {new Date(request.updatedAt).toLocaleDateString()}
+                          </div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         {request.status === "PENDING" && (

@@ -137,18 +137,14 @@ export class USDTMonitor {
         return;
       }
 
-      // Calculate tokens based on current price
-      const currentPrice = await this.getCurrentTokenPrice();
-      const tokenAmount = amount / currentPrice;
-
-      // Create transaction record
+      // Create USDT deposit record
       await prisma.transaction.create({
         data: {
           userId: user.id,
-          type: 'PURCHASE',
+          type: 'DEPOSIT',
           amount: amount,
-          tokenAmount: tokenAmount,
-          pricePerToken: currentPrice,
+          tokenAmount: 0, // No tokens - USDT only
+          pricePerToken: 0, // No price for USDT deposits
           paymentMethod: 'usdt_erc20',
           status: 'COMPLETED',
           description: `USDT deposit via ERC-20`,
@@ -157,12 +153,11 @@ export class USDTMonitor {
         }
       });
 
-      // Update user's token balance
+      // Update user's USDT balance only
       await prisma.user.update({
         where: { id: user.id },
         data: {
-          totalTokens: { increment: tokenAmount },
-          availableTokens: { increment: tokenAmount },
+          usdtBalance: { increment: amount }, // Add to USDT balance only
         }
       });
 
@@ -171,7 +166,7 @@ export class USDTMonitor {
         email: user.email,
         name: user.name,
         title: 'USDT Deposit Successful',
-        message: `Your deposit of $${amount.toFixed(2)} USDT has been processed. You received ${tokenAmount.toFixed(2)} DIT tokens.`,
+        message: `Your deposit of $${amount.toFixed(2)} USDT has been processed and added to your USDT balance.`,
         priority: 'medium'
       });
 

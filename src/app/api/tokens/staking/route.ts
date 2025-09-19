@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         amount: true,
+        stakingPeriod: true,
         startDate: true,
         endDate: true,
         status: true,

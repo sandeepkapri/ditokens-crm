@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { countries } from "@/data/countries";
 
 function SignUpContent() {
     const router = useRouter();
@@ -196,16 +197,11 @@ function SignUpContent() {
                                         }`}
                                 >
                                     <option value="">Select Country</option>
-                                    <option value="IN">India</option>
-                                    <option value="US">United States</option>
-                                    <option value="UK">United Kingdom</option>
-                                    <option value="CA">Canada</option>
-                                    <option value="AU">Australia</option>
-                                    <option value="DE">Germany</option>
-                                    <option value="FR">France</option>
-                                    <option value="CN">China</option>
-                                    <option value="JP">Japan</option>
-                                    <option value="BR">Brazil</option>
+                                    {countries.map((country) => (
+                                        <option key={country.code} value={country.code}>
+                                            {country.name}
+                                        </option>
+                                    ))}
                                 </select>
                                 {errors.country && <p className="mt-1 text-sm text-red-600">{errors.country}</p>}
                             </div>
@@ -388,7 +384,7 @@ function SignUpContent() {
                                     </svg>
                                 </div>
                                 <div>
-                                    <h4 className="font-semibold">5% Referral Bonus</h4>
+                                    <h4 className="font-semibold">Referral Bonus</h4>
                                     <p className="text-sm text-blue-100">Earn commissions monthly</p>
                                 </div>
                             </div>
@@ -426,7 +422,7 @@ function SignUpContent() {
                                     <div className="text-sm text-blue-100">Total Tokens</div>
                                 </div>
                                 <div>
-                                    <div className="text-2xl font-bold">5%</div>
+                                    <div className="text-2xl font-bold">Commission</div>
                                     <div className="text-sm text-blue-100">Referral Rate</div>
                                 </div>
                             </div>

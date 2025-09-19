@@ -14,7 +14,16 @@ interface Referral {
   status: "ACTIVE" | "PENDING" | "INACTIVE";
   totalSpent: number;
   commissionEarned: number;
-  lastPurchase: string;
+  confirmedCommission: number;
+  pendingCommission: number;
+  firstCommissionDate: string | null;
+  firstCommissionAmount: number;
+  transactionCounts: {
+    total: number;
+    completed: number;
+    pending: number;
+    failed: number;
+  };
 }
 
 export default function ReferralHistoryPage() {
@@ -115,6 +124,25 @@ export default function ReferralHistoryPage() {
           </p>
         </div>
 
+        {/* Commission Policy Notice */}
+        <div className="mb-6 rounded-sm border border-blue-200 bg-blue-50 px-4 py-3 dark:border-blue-800 dark:bg-blue-900/20">
+          <div className="flex items-start">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Commission Policy
+              </h3>
+              <div className="mt-1 text-sm text-blue-700 dark:text-blue-300">
+                <p>Commission is earned only on your referrals&apos; <strong>first purchase</strong>, not on subsequent purchases. This ensures fair and sustainable rewards for bringing new users to the platform.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Stats Overview */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-6 xl:grid-cols-4 2xl:gap-7.5 mb-6">
           <div className="rounded-sm border border-stroke bg-white p-4 shadow-default dark:border-stroke-dark dark:bg-box-dark">
@@ -201,12 +229,14 @@ export default function ReferralHistoryPage() {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Status
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Total Spent
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Commission
-                    </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Total Spent
+                    <div className="text-xs text-gray-400 normal-case">(All purchases)</div>
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Commission Earned
+                    <div className="text-xs text-gray-400 normal-case">(First purchase only)</div>
+                  </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       First Commission
                     </th>
@@ -232,10 +262,16 @@ export default function ReferralHistoryPage() {
                         {getStatusBadge(referral.status)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                        ${referral.totalSpent.toFixed(2)}
+                        <div>
+                          <div className="font-medium">${referral.totalSpent.toFixed(2)}</div>
+                          <div className="text-xs text-gray-500">All purchases</div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-success font-medium">
-                        ${referral.commissionEarned.toFixed(2)}
+                        <div>
+                          <div className="font-medium">${referral.commissionEarned.toFixed(2)}</div>
+                          <div className="text-xs text-gray-500">From first purchase only</div>
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                         {referral.firstCommissionDate ? (

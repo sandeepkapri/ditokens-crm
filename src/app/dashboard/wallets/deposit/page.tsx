@@ -22,6 +22,7 @@ export default function DepositWalletPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState("");
   const [userBalance, setUserBalance] = useState(0);
+  const [usdtBalance, setUsdtBalance] = useState(0);
   const [currentPrice, setCurrentPrice] = useState(2.80);
   const [selectedNetwork, setSelectedNetwork] = useState("usdt-erc20");
 
@@ -49,7 +50,8 @@ export default function DepositWalletPage() {
       // Load user balance
       if (balanceResponse.ok) {
         const balanceData = await balanceResponse.json();
-        setUserBalance(balanceData.availableTokens || 0);
+        setUserBalance(balanceData.stats?.availableTokens || 0);
+        setUsdtBalance(balanceData.stats?.usdtBalance || 0);
       }
 
       // Load deposit transactions
@@ -229,7 +231,7 @@ export default function DepositWalletPage() {
         <h3 className="text-lg font-semibold text-black dark:text-white mb-4">
           Your Balance
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="text-center">
             <div className="text-3xl font-bold text-blue-600 mb-2">
               {(userBalance || 0).toFixed(2)}
@@ -239,19 +241,27 @@ export default function DepositWalletPage() {
             </div>
           </div>
           <div className="text-center">
+            <div className="text-3xl font-bold text-yellow-600 mb-2">
+              ${(usdtBalance || 0).toFixed(2)}
+            </div>
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              USDT Balance (Deposit/Withdraw Only)
+            </div>
+          </div>
+          <div className="text-center">
             <div className="text-3xl font-bold text-green-600 mb-2">
               ${((userBalance || 0) * currentPrice).toFixed(2)}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Estimated Value (USD)
+              Token Value (USD)
             </div>
           </div>
           <div className="text-center">
             <div className="text-3xl font-bold text-purple-600 mb-2">
-              {((userBalance || 0) * currentPrice / 1).toFixed(2)}
+              ${((usdtBalance || 0) + (userBalance || 0) * currentPrice).toFixed(2)}
             </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Equivalent USDT
+              Total Portfolio Value
             </div>
           </div>
         </div>
@@ -386,6 +396,26 @@ export default function DepositWalletPage() {
         )}
       </div>
 
+      {/* USDT Actions */}
+      {usdtBalance > 0 && (
+        <div className="mt-6 rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
+          <h3 className="text-lg font-medium text-black dark:text-white mb-4">
+            USDT Actions
+          </h3>
+          <div className="flex gap-4">
+            <button
+              onClick={() => router.push("/dashboard/wallets/usdt-withdraw")}
+              className="px-6 py-3 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 transition-colors"
+            >
+              💸 Withdraw USDT
+            </button>
+            <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
+              Available: ${usdtBalance.toFixed(2)} USDT
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Important Information */}
       <div className="mt-6 rounded-sm border border-stroke bg-white px-5 pt-6 pb-6 shadow-default dark:border-strokedark dark:bg-boxdark sm:px-7.5">
         <h3 className="text-lg font-medium text-black dark:text-white mb-4">
@@ -422,7 +452,7 @@ export default function DepositWalletPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
             <div>
-              <strong>Automatic processing:</strong> DIT tokens are credited automatically after confirmation.
+              <strong>USDT deposits only:</strong> USDT is stored as USDT balance for deposits/withdrawals only.
             </div>
           </li>
         </ul>

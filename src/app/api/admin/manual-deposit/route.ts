@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { isAdminUser } from "@/lib/admin-auth";
 import { prisma } from "@/lib/prisma";
 import { sendNotification } from "@/lib/email-events";
+import { NotificationHelpers } from "@/lib/notifications";
 import { z } from "zod";
 
 const manualDepositSchema = z.object({
@@ -36,7 +37,8 @@ export async function POST(request: NextRequest) {
         email: true,
         isActive: true,
         availableTokens: true,
-        totalTokens: true
+        totalTokens: true,
+        referredBy: true
       }
     });
 
@@ -48,18 +50,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "User account is not active" }, { status: 400 });
     }
 
-    // Get current token price
-    const currentPrice = await getCurrentTokenPrice();
-    const tokenAmount = usdtAmount / currentPrice;
-
-    // Create transaction record
+    // Create USDT deposit transaction record
     const transaction = await prisma.transaction.create({
       data: {
         userId: user.id,
-        type: 'PURCHASE',
+        type: 'DEPOSIT',
         amount: usdtAmount,
-        tokenAmount: tokenAmount,
-        pricePerToken: currentPrice,
+        tokenAmount: 0, // No tokens - USDT only
+        pricePerToken: 0, // No price for USDT deposits
         paymentMethod: 'usdt_erc20',
         status: 'COMPLETED',
         description: `Manual USDT deposit processing - ${txHash}`,
@@ -68,29 +66,29 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Update user's token balance and handle referral commission
+    // Update user's USDT balance only
     await prisma.$transaction(async (tx) => {
-      // Update user's token balance
+      // Update user's USDT balance
       await tx.user.update({
         where: { id: user.id },
         data: {
-          totalTokens: { increment: tokenAmount },
-          availableTokens: { increment: tokenAmount },
+          usdtBalance: { increment: usdtAmount }, // Add to USDT balance only
         }
       });
 
-      // Handle referral commission if user was referred (FIRST PURCHASE ONLY)
-      if (user.referredBy) {
+      // Note: Deposits do not trigger referral commissions
+      // Commissions are only triggered when users actually purchase DIT tokens
+      if (false && user?.referredBy) {
         const referrer = await tx.user.findUnique({
-          where: { referralCode: user.referredBy },
+          where: { referralCode: user?.referredBy || undefined },
           select: { id: true, name: true, email: true }
         });
 
-        if (referrer) {
+        if (referrer && user) {
           // Check if this is the user's first purchase
           const existingTransactions = await tx.transaction.count({
             where: {
-              userId: user.id,
+              userId: user?.id,
               type: 'PURCHASE',
               status: 'COMPLETED'
             }
@@ -98,14 +96,27 @@ export async function POST(request: NextRequest) {
 
           // Only create commission on FIRST purchase (existingTransactions = 0 means this is the first)
           if (existingTransactions === 0) {
-            const commissionAmount = usdtAmount * 0.05; // 5% commission
-            const commissionTokenAmount = tokenAmount * 0.05;
+            // Get current commission percentage from settings
+            let commissionSettings = await tx.commissionSettings.findFirst();
+            if (!commissionSettings) {
+              // Create default settings if none exist
+                commissionSettings = await tx.commissionSettings.create({
+        data: {
+          referralRate: 5.0,
+          updatedBy: session?.user?.email || "system",
+        }
+              });
+            }
+
+            const commissionPercentage = (commissionSettings?.referralRate || 5.0) / 100; // Convert percentage to decimal
+            const commissionAmount = usdtAmount * commissionPercentage; // Commission in USDT
+            const commissionTokenAmount = 0; // No tokens for USDT deposits
 
             // Check if referral commission already exists (shouldn't happen for first purchase)
             const existingCommission = await tx.referralCommission.findFirst({
               where: {
-                referrerId: referrer.id,
-                referredUserId: user.id,
+                referrerId: referrer?.id,
+                referredUserId: user?.id,
               }
             });
 
@@ -113,11 +124,13 @@ export async function POST(request: NextRequest) {
               // Create referral commission record for first purchase only
               await tx.referralCommission.create({
                 data: {
-                  referrerId: referrer.id,
-                  referredUserId: user.id,
+                  referrerId: referrer?.id || "",
+                  referredUserId: user?.id || "",
                   amount: commissionAmount,
                   tokenAmount: commissionTokenAmount,
-                  pricePerToken: currentPrice, // Save current price at time of first purchase
+                  pricePerToken: 2.8, // Default price for USDT deposits
+                  commissionPercentage: commissionSettings?.referralRate || 5.0, // Save the percentage used
+                  status: "APPROVED", // Automatically approved for manual deposits
                   month: new Date().getMonth() + 1,
                   year: new Date().getFullYear(),
                 }
@@ -125,28 +138,23 @@ export async function POST(request: NextRequest) {
 
               // Update referrer's earnings
               await tx.user.update({
-                where: { id: referrer.id },
+                where: { id: referrer?.id },
                 data: {
                   referralEarnings: { increment: commissionAmount }
                 }
               });
 
               // Create notification for referrer
-              await tx.notification.create({
-                data: {
-                  userId: referrer.id,
-                  title: 'Referral Commission Earned',
-                  message: `You earned $${commissionAmount.toFixed(2)} commission from ${user.name}'s first purchase of $${usdtAmount.toFixed(2)} at $${currentPrice}/token`,
-                  type: 'INFO',
-                  priority: 'medium',
-                  isRead: false,
-                }
-              });
+              await NotificationHelpers.onReferralCommission(
+                referrer?.id || "",
+                commissionAmount,
+                user?.name || "User"
+              );
 
-              console.log(`FIRST PURCHASE: Referral commission created: $${commissionAmount} for referrer ${referrer.email} from ${user.email}'s $${usdtAmount} purchase at $${currentPrice}/token`);
+              console.log(`FIRST PURCHASE: Referral commission created: $${commissionAmount} for referrer ${referrer?.email} from ${user?.email}'s $${usdtAmount} purchase at $2.8/token`);
             }
           } else {
-            console.log(`SKIPPED: Commission not created - this is not ${user.email}'s first purchase (existing transactions: ${existingTransactions})`);
+            console.log(`SKIPPED: Commission not created - this is not ${user?.email}'s first purchase (existing transactions: ${existingTransactions})`);
           }
         }
       }
@@ -157,7 +165,7 @@ export async function POST(request: NextRequest) {
       email: user.email,
       name: user.name,
       title: 'USDT Deposit Processed',
-      message: `Your USDT deposit of $${usdtAmount.toFixed(2)} has been processed. You received ${tokenAmount.toFixed(2)} DIT tokens.`,
+      message: `Your USDT deposit of $${usdtAmount.toFixed(2)} has been added to your USDT balance. You can withdraw this USDT or use it for other purposes.`,
       priority: 'medium'
     });
 
@@ -175,7 +183,7 @@ export async function POST(request: NextRequest) {
         email: admin.email,
         name: admin.name,
         title: 'Manual USDT Deposit Processed',
-        message: `Admin processed USDT deposit for ${user.email}: $${usdtAmount.toFixed(2)} USDT → ${tokenAmount.toFixed(2)} DIT tokens`,
+        message: `Admin processed USDT deposit for ${user.email}: $${usdtAmount.toFixed(2)} USDT added to balance`,
         priority: 'low'
       });
     }
@@ -186,7 +194,6 @@ export async function POST(request: NextRequest) {
       transaction: {
         id: transaction.id,
         usdtAmount,
-        tokenAmount,
         userEmail: user.email,
         txHash
       }

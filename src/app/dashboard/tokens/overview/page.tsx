@@ -10,6 +10,12 @@ interface TokenStats {
   availableTokens: number;
   stakedTokens: number;
   currentPrice: number;
+  latestPrice: number;
+  totalUpdates: number;
+  highestPrice: number;
+  averagePrice: number;
+  priceChange24h: number;
+  priceChangePercent24h: number;
   marketCap: number;
   totalHolders: number;
 }
@@ -28,6 +34,12 @@ export default function TokenOverviewPage() {
     availableTokens: 35000000,
     stakedTokens: 15000000,
     currentPrice: 2.8,
+    latestPrice: 2.8,
+    totalUpdates: 0,
+    highestPrice: 2.8,
+    averagePrice: 2.8,
+    priceChange24h: 0,
+    priceChangePercent24h: 0,
     marketCap: 140000000,
     totalHolders: 1250,
   });
@@ -84,7 +96,7 @@ export default function TokenOverviewPage() {
       if (priceStatsResponse.ok) {
         const priceStatsData = await priceStatsResponse.json();
         // Update token stats with real-time price data
-        setTokenStats(prev => prev ? {
+        setTokenStats(prev => ({
           ...prev,
           currentPrice: priceStatsData.currentPrice,
           latestPrice: priceStatsData.latestPrice,
@@ -93,7 +105,7 @@ export default function TokenOverviewPage() {
           averagePrice: priceStatsData.averagePrice,
           priceChange24h: priceStatsData.priceChange24h,
           priceChangePercent24h: priceStatsData.priceChangePercent24h
-        } : null);
+        }));
       }
 
       // Load price data
